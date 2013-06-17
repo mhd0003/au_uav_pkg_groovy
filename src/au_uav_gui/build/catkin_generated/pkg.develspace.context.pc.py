@@ -1,0 +1,7 @@
+CATKIN_PACKAGE_PREFIX=""
+PROJECT_ABSOLUTE_INCLUDE_DIRS="/home/viki/catkin_ws/src/au_uav_gui/build/devel/include;/home/viki/catkin_ws/src/au_uav_gui/include"
+PROJECT_CATKIN_DEPENDS="roscpp;roslib;message_runtime"
+PKG_CONFIG_LIBRARIES_WITH_PREFIX="-lau_uav_gui"
+PROJECT_NAME="au_uav_gui"
+PROJECT_SPACE_DIR="/home/viki/catkin_ws/src/au_uav_gui/build/devel"
+PROJECT_VERSION="0.0.0"

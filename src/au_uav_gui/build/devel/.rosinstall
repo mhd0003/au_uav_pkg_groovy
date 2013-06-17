@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/viki/catkin_ws/src/au_uav_gui/build/devel/setup.sh

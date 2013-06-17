@@ -1,0 +1,72 @@
+/*
+Simulation
+- Singleton Class to create WIND and GPS Error Simulation models
+*/
+
+#ifndef SIMULATION_H
+#define SIMULATION_H
+
+#include "au-uav-ros/standardDefs.h"
+#include <au-uav-ros/WindSimulation.h>
+#include <au-uav-ros/GPSErrorSimulation.h>
+
+namespace au-uav-ros
+{
+
+  class CSimulation {
+
+  public:
+    // Singleton Access functions
+    static au-uav-ros::CSimulation& GetInstance();
+
+    // Function to update the simulation values
+    void UpdateSimulatedValues(double&,double&,double&);
+
+    // 	Get Distance and Bearing between tow lat/longs
+    void GetDistanceAndBearing(double lat1,double lat2,
+			       double long1,double long2,
+			       double& newLat, double& newLong,
+			       double& actualBearing,
+			       double& bearing,
+			       double& distanceToDesitnation,
+			       double& groundSpeed);
+  private:
+    // Constructor
+    CSimulation() {
+      wind_model = new au-uav-ros::CWindSimulation(gps_error_model);
+    };
+  
+    CSimulation(const CSimulation&);
+    CSimulation& operator=(const CSimulation&);
+    
+    
+    // WindSimulation Object
+    au-uav-ros::CWindSimulation* wind_model;
+    
+    // GPS Error Simulation Object
+    au-uav-ros::CGPSErrorSimulation gps_error_model;
+
+    // Calculate distance and bearing using Haversines
+    void HaversinesCalculation(double lat1,double lat2,
+			       double long1,double long2,
+			       double& newLat,double& newLong,
+			       double& actualBearing,
+			       double& bearing,
+			       double& distanceToDesitnation,
+			       double& groundSpeed);
+
+    // Calculate distance and bearing using Geodetic Datums
+    void GeodeticCalculation(double lat1,double lat2,
+			     double long1,double long2,
+			     double& newLat,double& newLong,
+			     double& actualBearing,
+			     double& bearing,
+			     double& distanceToDesitnation,
+			     double& groundSpeed);
+
+    // Utility Function to check the turning radius
+    double CheckTurningRadius(const double,double);
+  };
+}
+
+#endif

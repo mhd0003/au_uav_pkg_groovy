@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "au_uav_gui")
+set(au_uav_gui_MAINTAINER "David Jones <dhj0001@auburn.edu>, Craig Fisher <craig.fisher@scranton.edu>, Jonathan Taylor <jzt0011@auburn.edu>")
+set(au_uav_gui_DEPRECATED "")
+set(au_uav_gui_VERSION "0.0.0")
+set(au_uav_gui_BUILD_DEPENDS "qt4" "message_generation" "rospy" "roscpp" "roslib" "std_msgs")
+set(au_uav_gui_RUN_DEPENDS "au_uav_ros" "qt4" "roslib" "rospy" "message_runtime" "roscpp" "std_msgs")
+set(au_uav_gui_BUILDTOOL_DEPENDS "catkin")
