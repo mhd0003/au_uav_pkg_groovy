@@ -11,13 +11,13 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>AU UAV GUI</string>
+   <string>au_uav_gui</string>
   </property>
   <property name="toolTip">
-   <string>AU UAV GUI</string>
+   <string>au_uav_gui</string>
   </property>
   <property name="statusTip">
-   <string>AU UAV GUI</string>
+   <string>au_uav_gui</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QTabWidget" name="tabWidget">
