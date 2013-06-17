@@ -1,6 +1,0 @@
-Name: au_uav_gui
-Description: Description of au_uav_gui
-Version: 0.0.0
-Cflags: -I/usr/local/include
-Libs: -L/usr/local/lib -lau_uav_gui
-Requires: roscpp roslib message_runtime
