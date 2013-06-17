@@ -11,3 +11,8 @@
 *.lai
 *.la
 *.a
+
+# Keeps the github clean
+devel
+build
+*~
