@@ -28,26 +28,26 @@ Before you can clone and use the au_uav_pkg, ROS must be setup on your system.  
 
 After ROS is installed, you can now fork the au_uav_pkg repository. 
  
-1. Fork the "au_uav_pkg" repository by clicking the "Fork" button on the github website.  
+1. Fork the "au_uav_pkg" repository by clicking the "Fork" button on the github website.  Note:  A more detailed description of forking can be found at help.github.com/articles/fork-a-repo.
 
 2. Open a Terminal and clone this repository into your Home directory by running the following code: 
 ```
 git clone https://github.com/dhj0001/au_uav_pkg.git
 ```
 
-3. If you have setup your catkin workspace, there should be a CMakeLists.txt file in your catkin_ws/src folder.  Move this file into the au_uav_pkg/src folder.  You can do this through the Terminal by typing
+3. If you have setup your catkin workspace, there should be a CMakeLists.txt file in your catkin_ws/src folder.  Move this file into the au_uav_pkg/src folder.  You can do this through the Terminal by typing:
 ```
 mv /catkin_ws/src/CMakeLists.txt /au_uav_pkg/src
 ```
 
-4. Next delete all of the files and folders in your catkin workspace by typing:
+4. Next, delete all of the files and folders in your catkin workspace by executing the following commands:
 ```
 rm -rf catkin_ws/src
 rm -rf catkin_ws/devel
 rm -rf catkin_ws/build
 ```
 
-5. Now, move the files and folderes in au_uav_pkg (Arduino, Documentation, ExtraTools, README.md, and src) into the catkin_ws directory.  You can do this through the Terminal by typing:
+5. Now, move the files and folderes in au_uav_pkg (Arduino, Documentation, ExtraTools, README.md, and src) into the catkin_ws directory.  You can do this through the Terminal by executing the following commands:
 ```
 mv /au_uav_pkg/Arduino /catkin_ws
 mv /au_uav_pkg/ExtraTools /catkin_ws
@@ -76,9 +76,73 @@ Installing QT
 Installing QT Creator
 ---------------------
     
-1. In order to develop the GUI, we need to install QT Creator. This allows for the user interface files to be edited and provides a very good IDE for the QT system. Once again we need to visit http://qt-project.org/downloads.  From there, we will click on “QT Creator 2.7.0 for Linux/X11 32-bit (60 MB)”.  If it isn't available on qt-project.org, you may have to search google.com for the correct version.
+1. In order to develop the GUI, we need to install QT Creator. This allows for the user interface files to be edited and provides a very good IDE for the QT system. Once again we need to visit http://qt-project.org/downloads.  From there, we will click on “QT Creator 2.7.0 for Linux/X11 32-bit (60 MB)”.  If it isn't available on qt-project.org, you may have to search google.com for the correct version. (Note: Please ensure that the correct version is downloaded. Portions of the file saving code are version-specific.)
     
 2. Once the file has downloaded, open terminal and navigate to the directory where it is saved. After this, run “sudo chmod +x qt-creator-linux-x86-opensource-2.7.0.bin”
     
 3. Next, run “./qt-creator-linux-x86-opensource-2.7.0.bin”. This will open an installer. Follow the on screen steps to complete the installation (Next, Next, Agree, Install, Finish). On the last screen, be sure to uncheck the box that labeled start QT Creator. We will need to run it from the terminal instead. If you forget, simply close the instance of QT Creator that appears.
 
+Installing ROS Dependencies
+---------------------------
+
+In order to utilize the wind simulation, GeographicLib and libnoise need to be downloaded and installed.  Lets start with GeographicLib.  
+
+1. Retreive GeographicLib from sourceforge.net/projects/geographiclib/files/distrib (Note: This has only been tested with GeographicLib-1.30).  If prompted on where to save it, just pick a folder with a path that you can easily remember.
+
+2. Open a Terminal and navigate to this folder.  Then type the following commands:
+```
+mkdir build
+cd build
+cmake ..
+cmake .
+make
+make test
+make install
+```
+This should install GeographicLib into your usr/local directory.  Navigate to this directory and ensure the lib and include directories contain GeographicLib files.  Remember this directory, because we will navigate back to it again.
+
+
+Next, we will install libnoise.
+
+1. Retreive libnoise from github.com/eXpl0it3r/libnoise.  Once again, just pick a folder to save that has a path that you can easily remember.
+
+2. Open a Terminal and navigate to this folder.  Then type the following commands:
+```
+mkdir build
+cd build
+cmake ..
+cmake .
+make
+make install
+```
+
+Finally, we must now copy some .so files into the catkin_ws folder.
+
+1. First, we will use catkin_make to auto generate the devel/lib folder. Do this by entering the following commands:
+```
+cd catkin_ws
+catkin_make
+```
+
+2. Then, enter the following commands to copy the .so files into the devel/lib folder:
+```
+cd ../../../
+sudo cp usr/local/lib/libGeographic.so home/USERNAME/catkin_ws/devel/lib
+sudo cp usr/local/lib/libGeographic.so.9 home/USERNAME/catkin_ws/devel/lib
+```
+
+ROS Build
+---------
+
+To build the au_uav_pkg navigate to your catkin_ws.  Once you are in the catkin_ws enter the following command:
+```
+catkin_make
+```
+
+ROS Launch
+----------
+
+To run the au_uav_pkg navigate to your catkin_ws.  Once your are in the catkin_ws, and you have already built the au_uav_pkg, launch the system by entering the following command:
+```
+roslaunch au_uav_ros guiDriven.launch
+```
