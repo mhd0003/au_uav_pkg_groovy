@@ -1,10 +1,7 @@
-au_uav_pkg
-==========
+Auburn ATTRACT
+==============
 
-The Auburn ATTRACT project github repository.
-
-The au_uav_pkg is a ROS project that implements an autonomous testbed for real and simualted UAVs.  This project utilizes key ROS features to acheieve a safe and reliable collision avoidance system.
-
+Unmanned aerial vehicles (UAVs) are increasingly in popularity and usability in many civil and military applications.  For a safe deployment of a fleet of UAVs operating over a limited airspace, collision avoidance algorithms are needed.  Therefore, Auburn University launched a project to fly autonomously, safely, and efficiently six to twelve UAVs.  This project, dubbed ATTRACT, aims to design and implement an aerial and terrestrial test bed for research and teaching in aerospace engineering, computer science, and mathematics.  The au_uav_pkg contains everything involved in the Auburn ATTRACT project.
 
 Key Components
 --------------
@@ -17,9 +14,11 @@ Key Components
 
 4. XBeeIO - Integrates real UAVs through a X-Bee telemetry module.
 
-5. Launch files - Inherited from ROS; files used to specify which parts of the system to launch.
+5. au_uav_gui - QT modules used to visualize the UAVs.
 
-6. Course files - A basic system for creating a mission (for a specific UAV) and loading it into the program.
+6. Launch files - Inherited from ROS; files used to specify which parts of the system to launch.
+
+7. Course files - A basic system for creating a mission (for a specific UAV).
 
 
 Installing ROS
@@ -27,8 +26,8 @@ Installing ROS
 
 Before you can clone and use the au_uav_pkg, ROS must be setup on your system.  ROS is required to run on unix-based opperating system.  There are two options in order to configure ROS: Installing and maintaining a personal unix opperating system or using a Virtual Machine to virtualize the unix enviornment.  For ease of installation, I recommend using a VM.  You can download the VM at http://nootrix.com/downloads (The Groovy Galapagos Version).  In order to install the VM, you will also need to download VirtualBox provided at http://www.virtualbox.org/wiki/Downloads.  If you choose to dual-boot opperating systems or have a working version of a unix-based opperating system, then simply follow the ROS installation instructions at http://www.ros.org/wiki/ROS/Installation (Make sure to follow the Groovy/catkin instructions).
 
-Installing QT Dependencies
---------------------------
+Installing QT
+-------------
 
 1. Navigate to http://qt-project.org/downloads and click on “Qt libraries 4.8.4 for Linux/X11 (225 MB)”. This will start a fairly large download that might take some time. If prompted on where to save it, just pick a folder with a path that you can easily remember. (Note: Please ensure that the correct version is downloaded. Portions of the file saving code are version-specific.)
     
