@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package>
+  <name>au_uav_pkg</name>
+  <version>0.0.0</version>
+  <description>The au_uav_pkg package</description>
+
+  <maintainer email="craig.fisher@scranton.edu">Craig Fisher</maintainer>
+  <maintainer email="jzt0011@auburn.edu">Jonathan Taylor</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>au_uav_ros</run_depend>
+  <run_depend>au_uav_gui</run_depend>
+
+  <export>
+	<metapackage/>
+  </export>
+</package>
