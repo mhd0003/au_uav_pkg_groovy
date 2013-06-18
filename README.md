@@ -31,15 +31,32 @@ After ROS is installed, you can now fork the au_uav_pkg repository.
 1. Fork the "au_uav_pkg" repository by clicking the "Fork" button on the github website.  
 
 2. Open a Terminal and clone this repository into your Home directory by running the following code: 
-```C
+```
 git clone https://github.com/dhj0001/au_uav_pkg.git
 ```
 
 3. If you have setup your catkin workspace, there should be a CMakeLists.txt file in your catkin_ws/src folder.  Move this file into the au_uav_pkg/src folder.  You can do this through the Terminal by typing
-    mv /catkin_ws/src/CMakeLists.txt /au_uav_pkg/src
+```
+mv /catkin_ws/src/CMakeLists.txt /au_uav_pkg/src
+```
 
-4. Now, move the files and folderes in au_uav_pkg (Arduino, Documentation, ExtraTools, README.md, and src) into the catkin_ws directory.
+4. Next delete all of the files and folders in your catkin workspace by typing:
+```
+rm -rf catkin_ws/src
+rm -rf catkin_ws/devel
+rm -rf catkin_ws/build
+```
 
+5. Now, move the files and folderes in au_uav_pkg (Arduino, Documentation, ExtraTools, README.md, and src) into the catkin_ws directory.  You can do this through the Terminal by typing:
+```
+mv /au_uav_pkg/Arduino /catkin_ws
+mv /au_uav_pkg/ExtraTools /catkin_ws
+mv /au_uav_pkg/Documentation /catkin_ws
+mv /au_uav_pkg/src /catkin_ws
+mv /au_uav_pkg/README.md /catkin_ws
+mv /au_uav_pkg/.git /catkin_ws
+mv /au_uav_pkg/.gitignore /catkin_ws
+```
 
 Installing QT
 -------------
