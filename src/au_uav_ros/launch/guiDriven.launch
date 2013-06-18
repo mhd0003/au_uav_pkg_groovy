@@ -1,9 +1,0 @@
-<launch>
-	<node name="collisionAvoidance" pkg="au_uav_ros" type="collisionAvoidance"/>
-	<node name="coordinator" pkg="au_uav_ros" type="coordinator"/>
-	<node name="KMLCreator" pkg="au_uav_ros" type="KMLCreator" output="screen" />
-	<node name="simulator" pkg="au_uav_ros" type="simulator" />
-	<node name="XbeeIO" pkg="au_uav_ros" type="XbeeIO" />
-	<node name="guiInterfacer" pkg="au_uav_ros" type="guiInterfacer" output="screen" />
-	<node name="au_uav_gui" pkg="au_uav_gui" type="au_uav_gui" output="screen" />
-</launch>
