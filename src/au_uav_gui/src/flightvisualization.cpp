@@ -183,23 +183,24 @@ void FlightVisualization::adjustMapCenter()
 
     for (int i = 0; i < TOTAL_NUM_OF_PLANES; i++) {
         if (activePlanes[i].planeActive) {
-            QString str2 = QString("extendBounds(%1, %2);").arg(
+            QString str2;
+            if (autoFitMap) {
+                str2 = QString("extendBounds(%1, %2, %3);").arg(
+                                   activePlanes[i].latitude, LAT_LONG_FIELD_WIDTH,
+                                   FLOAT_FORMATTER, LAT_LONG_NUM_OF_DIGITS).arg(
+                                   activePlanes[i].longitude, LAT_LONG_FIELD_WIDTH,
+                            FLOAT_FORMATTER, LAT_LONG_NUM_OF_DIGITS).arg(i);
+            }
+            else{
+                str2 = QString("extendBounds(%1, %2, %3);").arg(
                                activePlanes[i].latitude, LAT_LONG_FIELD_WIDTH,
                                FLOAT_FORMATTER, LAT_LONG_NUM_OF_DIGITS).arg(
                                activePlanes[i].longitude, LAT_LONG_FIELD_WIDTH,
-                               FLOAT_FORMATTER, LAT_LONG_NUM_OF_DIGITS);
-
-            ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(
-                str2);
-
-	    QString str4 = QString("extendBounds(%1, %2);").arg(
-                               activePlanes[i].latitude, LAT_LONG_FIELD_WIDTH,
-                               FLOAT_FORMATTER, LAT_LONG_NUM_OF_DIGITS).arg(
-                               activePlanes[i].longitude, LAT_LONG_FIELD_WIDTH,
-                               FLOAT_FORMATTER, LAT_LONG_NUM_OF_DIGITS);
-
-            ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(
-                str4);
+                        FLOAT_FORMATTER, LAT_LONG_NUM_OF_DIGITS).arg(INVALID_PLANE_ID);
+            }
+                
+                ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(
+                    str2);
         }
     }
 
