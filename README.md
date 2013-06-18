@@ -24,7 +24,19 @@ Key Components
 Installing ROS
 --------------
 
-Before you can clone and use the au_uav_pkg, ROS must be setup on your system.  ROS is required to run on unix-based opperating system.  There are two options in order to configure ROS: Installing and maintaining a personal unix opperating system or using a Virtual Machine to virtualize the unix enviornment.  For ease of installation, I recommend using a VM.  You can download the VM at http://nootrix.com/downloads (The Groovy Galapagos Version).  In order to install the VM, you will also need to download VirtualBox provided at http://www.virtualbox.org/wiki/Downloads.  If you choose to dual-boot opperating systems or have a working version of a unix-based opperating system, then simply follow the ROS installation instructions at http://www.ros.org/wiki/ROS/Installation (Make sure to follow the Groovy/catkin instructions).
+Before you can clone and use the au_uav_pkg, ROS must be setup on your system.  ROS is required to run on unix-based opperating systems.  A decision must be made prior to installing ROS: Installing and maintaining a personal unix opperating system or using a Virtual Machine to virtualize the unix enviornment.  For ease of installation, I recommend using a VM.  You can download the VM at http://nootrix.com/downloads (The Groovy Galapagos Version).  In order to install the VM, you will also need to download VirtualBox provided at http://www.virtualbox.org/wiki/Downloads.  If you choose to dual-boot opperating systems or have a working version of a unix-based opperating system, then simply follow the ROS installation instructions at http://www.ros.org/wiki/ROS/Installation (Make sure to follow the Groovy/catkin instructions).  
+
+After ROS is installed, you can now fork the au_uav_pkg repository.  
+1. Fork the "au_uav_pkg" repository by clicking the "Fork" button.  
+
+2. Open a Terminal and clone this repository into your Home directory by running the following code: 
+    git clone https://github.com/dhj0001/au_uav_pkg.git
+
+3. If you have setup your catkin workspace, there should be a CMakeLists.txt file in your catkin_ws/src folder.  Move this file into the au_uav_pkg/src folder.  You can do this through the Terminal by typing
+    mv /catkin_ws/src/CMakeLists.txt /au_uav_pkg/src
+
+4. Now, move the files and folderes in au_uav_pkg (Arduino, Documentation, ExtraTools, README.md, and src) into the catkin_ws directory.
+
 
 Installing QT
 -------------
