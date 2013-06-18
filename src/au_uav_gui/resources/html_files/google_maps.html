@@ -225,9 +225,12 @@ function updateMarker(planeID, lat, long, iconIndex) {
     }
 }
 
-function extendBounds(lat, long) {
+function extendBounds(lat, long, planeID) {
     var newLoc = new google.maps.LatLng(lat, long);
     bounds.extend(newLoc);
+    if(planeID >= 0) {
+        bounds.extend(wayPoints[planeID].getCenter());
+    }
 }
 
 function clearBounds() {
