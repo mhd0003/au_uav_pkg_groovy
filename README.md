@@ -30,10 +30,7 @@ After ROS is installed, you can now fork the au_uav_pkg repository.
  
 1. Fork the "au_uav_pkg" repository by clicking the "Fork" button on the github website.  
 
-2. Open a Terminal and clone this repository into your Home directory by running the following code:
-'''C
-git clone https://github.com/dhj0001/au_uav_pkg.git
-'''
+2. Open a Terminal and clone this repository into your Home directory by running the following code: 'git clone https://github.com/dhj0001/au_uav_pkg.git'
 
 3. If you have setup your catkin workspace, there should be a CMakeLists.txt file in your catkin_ws/src folder.  Move this file into the au_uav_pkg/src folder.  You can do this through the Terminal by typing
     mv /catkin_ws/src/CMakeLists.txt /au_uav_pkg/src
