@@ -97,8 +97,8 @@ mkdir build
 cd build
 cmake ..
 cmake .
-make
-make test
+sudo make
+sudo make test
 sudo make install
 ```
 This should install GeographicLib into your usr/local directory.  Navigate to this directory and ensure the lib and include directories contain GeographicLib files.  Remember this directory, because we will navigate back to it again.
@@ -114,7 +114,7 @@ mkdir build
 cd build
 cmake ..
 cmake .
-make
+sudo make
 sudo make install
 ```
 
