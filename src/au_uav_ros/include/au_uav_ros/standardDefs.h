@@ -30,6 +30,11 @@ Many defines for simulator calculations
 #define LATITUDE_TO_METERS (111200.0)
 #define METERS_TO_LATITUDE (1.0/111200.0)
 
+//Used for wind simulation until symbiotic simulation is added
+#define WIND_DIRECTION		180
+//maximum wind_speed is 9 mph
+#define MPH_WIND_SPEED		4
+
 
 namespace au_uav_ros
 {

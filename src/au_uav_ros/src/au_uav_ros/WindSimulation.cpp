@@ -14,9 +14,6 @@ enum WIND_FLUCTUATION_TYPE {
   PERIODIC
 };
 
-#define WIND_DIRECTION		180
-//maximum wind_speed is 9 mph
-#define MPH_WIND_SPEED		4
 #define MAXIMUM_WIND_SPEED	4.05
 #define KNOTS_TO_MPS		0.51444
 #define MPH_TO_MPS		0.44704
