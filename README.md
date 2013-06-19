@@ -19,7 +19,7 @@ Key Components
 
 6. Launch files - Inherited from ROS; files used to specify which parts of the system to launch.
 
-7. Course files - A basic system for creating a mission (for a specific UAV).
+7. Course files - A basic system for creating missions for a fleet of UAVs.
 
 
 Installing ROS
