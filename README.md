@@ -51,6 +51,13 @@ rm -rf catkin_ws/*
 mv /au_uav_pkg/* /catkin_ws
 ```
 
+6. It's convenient if the ROS environment variables are automatically added to your bash session every time a new shell is launched.  Configure your .bashrc file by typing the following commands:
+```
+echo "source ~/catkin_ws/devel/setup.bash" >> .bashrc
+echo "export ROS_WORKSPACE=/home/viki/catkin_ws" >> .bashrc
+source .bashrc
+```
+
 You can now set up your github Fork within your catkin_ws folder.  Refer to github.com for more instructions.
 
 Installing QT
