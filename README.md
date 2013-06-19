@@ -134,16 +134,16 @@ sudo cp usr/local/lib/libGeographic.so home/USERNAME/catkin_ws/devel/lib
 sudo cp usr/local/lib/libGeographic.so.9 home/USERNAME/catkin_ws/devel/lib
 ```
 
-ROS Build
----------
+Building
+--------
 
 To build the au_uav_pkg navigate to your catkin_ws.  Once you are in the catkin_ws enter the following command:
 ```
 catkin_make
 ```
 
-ROS Launch
-----------
+Launching
+---------
 
 To run the au_uav_pkg navigate to your catkin_ws.  Once your are in the catkin_ws, and you have already built the au_uav_pkg, launch the system by entering the following command:
 ```
