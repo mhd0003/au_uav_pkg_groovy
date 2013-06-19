@@ -1,7 +1,7 @@
 Auburn ATTRACT
 ==============
 
-Unmanned aerial vehicles ( **UAVs** ) are increasing in popularity and usability in many civil and military applications.  For a safe deployment of a fleet of UAVs operating over a limited airspace, collision avoidance is needed.  To solve this issue, Auburn University launched a project to fly autonomously, safely, and efficiently six to twelve UAVs.  This project, dubbed ATTRACT, aims to design and implement an **A**erial and **T**errestrial **T**estbed for **R**esearch in **A**aerospace, **C**omputing, and ma**T**hematics.  The au_uav_pkg contains everything involved in the Auburn ATTRACT project.
+Unmanned aerial vehicles ( **UAVs** ) are increasing in popularity and usability in many civil and military applications.  For a safe deployment of a fleet of UAVs operating over a limited airspace, collision avoidance is needed.  To solve this issue, Auburn University launched a project to fly autonomously, safely, and efficiently six to twelve UAVs.  This project ( **ATTRACT** ) aims to design and implement an Aerial and Terrestrial Testbed for Research in Aaerospace, Computing, and maThematics.  The au_uav_pkg contains everything involved in the Auburn ATTRACT project.
 
 
 Key Components
