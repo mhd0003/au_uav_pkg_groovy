@@ -31,9 +31,10 @@ After ROS is installed, you can now fork the au_uav_pkg repository.
  
 1. Fork the "au_uav_pkg" repository by clicking the "Fork" button on the github website.  Note:  A more detailed description of forking can be found at help.github.com/articles/fork-a-repo.
 
-2. Open a Terminal and clone this repository into your Home directory by running the following code: 
+2. Open a Terminal and clone this repository into your Home directory and remove the old CMakeLists.txt (if there is one) by running the following code: 
 ```
 git clone https://github.com/dhj0001/au_uav_pkg.git
+rm au_uav_pkg/src/CMakeLists.txt
 ```
 
 3. If you have setup your catkin workspace, there should be a CMakeLists.txt file in your catkin_ws/src folder.  Move this file into the au_uav_pkg/src folder.  You can do this through the Terminal by typing:
@@ -43,20 +44,12 @@ mv /catkin_ws/src/CMakeLists.txt /au_uav_pkg/src
 
 4. Next, delete all of the files and folders in your catkin workspace by executing the following commands:
 ```
-rm -rf catkin_ws/src
-rm -rf catkin_ws/devel
-rm -rf catkin_ws/build
+rm -rf catkin_ws/*
 ```
 
 5. Now, move the files and folders in au_uav_pkg (Arduino, Documentation, ExtraTools...etc) into the catkin_ws directory.  You can do this through the Terminal by executing the following commands:
 ```
-mv /au_uav_pkg/Arduino /catkin_ws
-mv /au_uav_pkg/ExtraTools /catkin_ws
-mv /au_uav_pkg/Documentation /catkin_ws
-mv /au_uav_pkg/src /catkin_ws
-mv /au_uav_pkg/README.md /catkin_ws
-mv /au_uav_pkg/.git /catkin_ws
-mv /au_uav_pkg/.gitignore /catkin_ws
+mv /au_uav_pkg/* /catkin_ws
 ```
 
 You can now set up your github Fork within your catkin_ws folder.  Refer to github.com for more instructions.
@@ -100,7 +93,7 @@ cmake ..
 cmake .
 make
 make test
-make install
+sudo make install
 ```
 This should install GeographicLib into your usr/local directory.  Navigate to this directory and ensure the lib and include directories contain GeographicLib files.  Remember this directory, because we will navigate back to it again.
 
@@ -116,7 +109,7 @@ cd build
 cmake ..
 cmake .
 make
-make install
+sudo make install
 ```
 
 Finally, we must now copy some .so files into the catkin_ws folder.
