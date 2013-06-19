@@ -78,18 +78,18 @@ Installing QT
 Installing QT Creator
 ---------------------
     
-1. In order to develop the GUI, we need to install QT Creator. This allows for the user interface files to be edited and provides a very good IDE for the QT system. Once again we need to visit http://qt-project.org/downloads.  From there, we will click on “QT Creator 2.7.0 for Linux/X11 32-bit (60 MB)”.  If it isn't available on qt-project.org, you may have to search google.com for the correct version. (Note: Please ensure that the correct version is downloaded. Portions of the file saving code are version-specific.)
+1. In order to develop the GUI, you need to install QT Creator. This allows for the user interface files to be edited and provides a very good IDE for the QT system. Once again we need to visit http://qt-project.org/downloads.  From there, we will click on “QT Creator 2.7.0 for Linux/X11 32-bit (60 MB)”.  If it isn't available on qt-project.org, you may have to search google.com for the correct version. (Note: Please ensure that the correct version is downloaded. Portions of the file saving code are version-specific.)
     
-2. Once the file has downloaded, open terminal and navigate to the directory where it is saved. After this, run “sudo chmod +x qt-creator-linux-x86-opensource-2.7.0.bin”
+2. Once the file has downloaded, open terminal and navigate to the directory where it is saved. After this, run `sudo chmod +x qt-creator-linux-x86-opensource-2.7.0.bin`
     
-3. Next, run “./qt-creator-linux-x86-opensource-2.7.0.bin”. This will open an installer. Follow the on screen steps to complete the installation (Next, Next, Agree, Install, Finish). On the last screen, be sure to uncheck the box that labeled start QT Creator. We will need to run it from the terminal instead. If you forget, simply close the instance of QT Creator that appears.
+3. Next, run `sudo ./qt-creator-linux-x86-opensource-2.7.0.bin`. This will open an installer. Follow the on screen steps to complete the installation (Next, Next, Agree, Install, Finish). On the last screen, be sure to uncheck the box that labeled start QT Creator. We will need to run it from the Terminal instead. If you forget, simply close the instance of QT Creator that appears.
 
 Installing ROS Dependencies
 ---------------------------
 
 In order to utilize the wind simulation, GeographicLib and libnoise need to be downloaded and installed.  Lets start with GeographicLib.  
 
-1. Retreive GeographicLib from sourceforge.net/projects/geographiclib/files/distrib (Note: This has only been tested with GeographicLib-1.30).  If prompted on where to save it, just pick a folder with a path that you can easily remember.
+1. Retrieve GeographicLib from sourceforge.net/projects/geographiclib/files/distrib (Note: This has only been tested with GeographicLib-1.30).  If prompted on where to save it, just pick a folder with a path that you can easily remember.
 
 2. Open a Terminal and navigate to this folder.  Then type the following commands:
 ```
@@ -106,7 +106,7 @@ This should install GeographicLib into your usr/local directory.  Navigate to th
 
 Next, we will install libnoise.
 
-1. Retreive libnoise from github.com/eXpl0it3r/libnoise.  Once again, just pick a folder to save that has a path that you can easily remember.
+1. Retrieve libnoise from github.com/eXpl0it3r/libnoise.  Once again, just pick a folder to save that has a path that you can easily remember.
 
 2. Open a Terminal and navigate to this folder.  Then type the following commands:
 ```
