@@ -129,8 +129,8 @@ catkin_make
 2. Then, enter the following commands to copy the .so files into the devel/lib folder:
 ```
 cd ../../../
-sudo cp usr/local/lib/libGeographic.so home/USERNAME/catkin_ws/devel/lib
-sudo cp usr/local/lib/libGeographic.so.9 home/USERNAME/catkin_ws/devel/lib
+sudo cp usr/local/lib/libGeographic.so ~/catkin_ws/devel/lib
+sudo cp usr/local/lib/libGeographic.so.9 ~/catkin_ws/devel/lib
 ```
 
 Building
