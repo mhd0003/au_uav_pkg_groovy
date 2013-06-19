@@ -1,7 +1,7 @@
 Auburn ATTRACT
 ==============
 
-Unmanned aerial vehicles (**UAVs**) are increasing in popularity and usability in many civil and military applications.  For a safe deployment of a fleet of UAVs operating over a limited airspace, collision avoidance is needed.  To solve this issue, Auburn University launched a project to fly autonomously, safely, and efficiently six to twelve UAVs.  This project, dubbed ATTRACT, aims to design and implement an **A**erial and **T**errestrial **T**estbed for **R**esearch in **A**aerospace, **C**omputing, and ma**T**hematics.  The au_uav_pkg contains everything involved in the Auburn ATTRACT project.
+Unmanned aerial vehicles ( **UAVs** ) are increasing in popularity and usability in many civil and military applications.  For a safe deployment of a fleet of UAVs operating over a limited airspace, collision avoidance is needed.  To solve this issue, Auburn University launched a project to fly autonomously, safely, and efficiently six to twelve UAVs.  This project, dubbed ATTRACT, aims to design and implement an **A**erial and **T**errestrial **T**estbed for **R**esearch in **A**aerospace, **C**omputing, and ma **T** hematics.  The au_uav_pkg contains everything involved in the Auburn ATTRACT project.
 
 
 Key Components
@@ -25,7 +25,7 @@ Key Components
 Installing ROS
 --------------
 
-Before you can clone and use the au_uav_pkg, the Robot Operating System (**ROS**) must be setup on your system.  ROS is required to run on unix-based operating systems.  A decision must be made prior to installing ROS: Installing and maintaining a personal unix operating system or using a Virtual Machine with a linux operating system.  For ease of installation, I recommend using a VM.  You can download the VM at http://nootrix.com/downloads (The Groovy Galapagos Version).  In order to install the VM, you will also need to download VirtualBox provided at http://www.virtualbox.org/wiki/Downloads.  If you choose to dual-boot operating systems or have a working version of a unix-based operating system, then simply follow the ROS installation instructions at http://www.ros.org/wiki/ROS/Installation (Make sure to follow the Groovy/catkin instructions).  
+Before you can clone and use the au_uav_pkg, the Robot Operating System ( **ROS** ) must be setup on your system.  ROS is required to run on unix-based operating systems.  A decision must be made prior to installing ROS: Installing and maintaining a personal unix operating system or using a Virtual Machine with a linux operating system.  For ease of installation, I recommend using a VM.  You can download the VM at http://nootrix.com/downloads (The Groovy Galapagos Version).  In order to install the VM, you will also need to download VirtualBox provided at http://www.virtualbox.org/wiki/Downloads.  If you choose to dual-boot operating systems or have a working version of a unix-based operating system, then simply follow the ROS installation instructions at http://www.ros.org/wiki/ROS/Installation (Make sure to follow the Groovy/catkin instructions).  
 
 After ROS is installed, you can now fork the au_uav_pkg repository. 
  
