@@ -1,7 +1,7 @@
 Auburn ATTRACT
 ==============
 
-Unmanned aerial vehicles (UAVs) are increasingly in popularity and usability in many civil and military applications.  For a safe deployment of a fleet of UAVs operating over a limited airspace, collision avoidance algorithms are needed.  Therefore, Auburn University launched a project to fly autonomously, safely, and efficiently six to twelve UAVs.  This project, dubbed ATTRACT, aims to design and implement an aerial and terrestrial test bed for research and teaching in aerospace engineering, computer science, and mathematics.  The au_uav_pkg contains everything involved in the Auburn ATTRACT project.
+Unmanned aerial vehicles (UAVs) are increasing in popularity and usability in many civil and military applications.  For a safe deployment of a fleet of UAVs operating over a limited airspace, collision avoidance is needed.  To solve this issue, Auburn University launched a project to fly autonomously, safely, and efficiently six to twelve UAVs.  This project, dubbed ATTRACT, aims to design and implement an aerial and terrestrial test bed for research and teaching in aerospace engineering, computer science, and mathematics.  The au_uav_pkg contains everything involved in the Auburn ATTRACT project.
 
 Key Components
 --------------
@@ -24,7 +24,7 @@ Key Components
 Installing ROS
 --------------
 
-Before you can clone and use the au_uav_pkg, ROS must be setup on your system.  ROS is required to run on unix-based opperating systems.  A decision must be made prior to installing ROS: Installing and maintaining a personal unix opperating system or using a Virtual Machine to virtualize the unix enviornment.  For ease of installation, I recommend using a VM.  You can download the VM at http://nootrix.com/downloads (The Groovy Galapagos Version).  In order to install the VM, you will also need to download VirtualBox provided at http://www.virtualbox.org/wiki/Downloads.  If you choose to dual-boot opperating systems or have a working version of a unix-based opperating system, then simply follow the ROS installation instructions at http://www.ros.org/wiki/ROS/Installation (Make sure to follow the Groovy/catkin instructions).  
+Before you can clone and use the au_uav_pkg, ROS must be setup on your system.  ROS is required to run on unix-based operating systems.  A decision must be made prior to installing ROS: Installing and maintaining a personal unix operating system or using a Virtual Machine with a linux operating system.  For ease of installation, I recommend using a VM.  You can download the VM at http://nootrix.com/downloads (The Groovy Galapagos Version).  In order to install the VM, you will also need to download VirtualBox provided at http://www.virtualbox.org/wiki/Downloads.  If you choose to dual-boot operating systems or have a working version of a unix-based operating system, then simply follow the ROS installation instructions at http://www.ros.org/wiki/ROS/Installation (Make sure to follow the Groovy/catkin instructions).  
 
 After ROS is installed, you can now fork the au_uav_pkg repository. 
  
@@ -47,7 +47,7 @@ rm -rf catkin_ws/devel
 rm -rf catkin_ws/build
 ```
 
-5. Now, move the files and folderes in au_uav_pkg (Arduino, Documentation, ExtraTools, README.md, and src) into the catkin_ws directory.  You can do this through the Terminal by executing the following commands:
+5. Now, move the files and folders in au_uav_pkg (Arduino, Documentation, ExtraTools...etc) into the catkin_ws directory.  You can do this through the Terminal by executing the following commands:
 ```
 mv /au_uav_pkg/Arduino /catkin_ws
 mv /au_uav_pkg/ExtraTools /catkin_ws
@@ -58,20 +58,22 @@ mv /au_uav_pkg/.git /catkin_ws
 mv /au_uav_pkg/.gitignore /catkin_ws
 ```
 
+You can now set up your github Fork within your catkin_ws folder.  Refer to github.com for more instructions.
+
 Installing QT
 -------------
 
 1. Navigate to http://qt-project.org/downloads and click on “Qt libraries 4.8.4 for Linux/X11 (225 MB)”. This will start a fairly large download that might take some time. If prompted on where to save it, just pick a folder with a path that you can easily remember. (Note: Please ensure that the correct version is downloaded. Portions of the file saving code are version-specific.)
     
-2. Once the file has been downloaded, it must be extracted. This can be done by double clicking on the file and using the archive manager, or by using the terminal. If using the terminal, first change the directory to the path where you saved the file and then run “gunzip qt-everywhere-opensource-src-4.8.4.tar.gz” followed by “tar xvf qt-everywhere-opensource-src-4.8.4.tar”.
+2. Once the file has been downloaded, it must be extracted. This can be done by double clicking on the file and using the archive manager, or by using the terminal. If using the terminal, first change the directory to the path where you saved the file and then run `gunzip qt-everywhere-opensource-src-4.8.4.tar.gz` followed by `tar xvf qt-everywhere-opensource-src-4.8.4.tar`
     
-3. Now open terminal (if it is not already open) and change the directory to the extracted folder labeled “qt-everywhere-opensource-src-4.8.4” and then run “sudo ./configure”. When prompted type ‘o’ for open source edition and “yes” to accept the license. This may take a little while to run (~30 mins).
+3. Now open terminal (if it is not already open) and change the directory to the extracted folder labeled “qt-everywhere-opensource-src-4.8.4” and then run `sudo ./configure`. When prompted type ‘o’ for open source edition and “yes” to accept the license. This may take a little while to run (~30 mins).
     
-4. After that is finished, run “sudo make”. This step will take several hours (up to 10 if using a virtual machine).
+4. After that is finished, run `sudo make`. This step will take several hours (up to 10 if using a virtual machine).
     
-5. Once make is finished, run “sudo make install”. This will also take several hours, but less than required for “make”
+5. Once make is finished, run `sudo make install`. This will also take several hours, but less than required for “make”
 
-6. We now need to install qt-ros, an intermediate between QT and ROS. This can be done through the terminal with “sudo apt-get install ros-fuerte-qt-ros”. Type “y” at the appropriate prompt. Note: you may have to run “sudo apt-get update” first if you receive an error.
+6. We now need to install qt-ros, an intermediate between QT and ROS. This can be done through the terminal with `sudo apt-get install ros-groovy-qt-ros`. Type “y” at the appropriate prompt. Note: you may have to run `sudo apt-get update` first if you receive an error.
 
 Installing QT Creator
 ---------------------
