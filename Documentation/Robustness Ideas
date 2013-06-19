@@ -1,0 +1,18 @@
+A List of ideas to add Robustness
+
+
+-TEST Cases!!
+
+-Dynamic nodes!!
+
+-Multiple Xbee Connections on failure
+
+-Waypoint Acks
+
+-Rethink and implement waypoint-hit logic
+
+-Clean up all of the defs and planeobjects
+
+-Dynamic plane IDs
+
+-Removing un-needing stuff like ControlMenu
