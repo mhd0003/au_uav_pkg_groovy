@@ -140,6 +140,11 @@ To build the au_uav_pkg navigate to your catkin_ws.  Once you are in the catkin_
 ```
 catkin_make
 ```
+If this is the first time you have built the au_uav_pkg, then enter the folloring commands:
+```
+echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+```
 
 Launching
 ---------
