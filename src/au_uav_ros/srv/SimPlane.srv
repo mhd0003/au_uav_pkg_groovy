@@ -1,0 +1,9 @@
+bool clear
+int16 planeID
+bool add
+float64[] latitudes
+float64[] longitudes
+float64[] altitudes
+int32 size
+---
+string error

@@ -4,9 +4,12 @@ RIPNA
 
 This is the header file for RIPNA.cpp, which implements the functions declared here. This file and its comments pertain to the usage of the functions contained in this file.
 */
+//TODO What is this?
+//#ifndef COLLISION_AVOIDANCE_ALGORITHM_H
+//#define COLLISION_AVOIDANCE_ALGORITHM_H
 
-#ifndef COLLISION_AVOIDANCE_ALGORITHM_H
-#define COLLISION_AVOIDANCE_ALGORITHM_H
+#ifndef _RIPNA_H_
+#define _RIPNA_H_
 
 #include <map>
 

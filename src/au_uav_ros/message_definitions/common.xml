@@ -1543,15 +1543,16 @@
                <field type="uint8_t" name="ind">index of debug variable</field>
                <field type="float" name="value">DEBUG value</field>
           </message>
-	  <message id="199" name="AU_REU_UAV">
+	  <message id="199" name="AU_UAV">
                 <description>The telemrety message for the Auburn REU program. </description>
 		<field type="int32_t" name="au_lat">Latitude, expressed as * 1E7</field>
-               <field type="int32_t" name="au_lon">Longitude, expressed as * 1E7</field>
+               <field type="int32_t" name="au_lng">Longitude, expressed as * 1E7</field>
                <field type="int32_t" name="au_alt">Altitude in meters, expressed as * 1000 (millimeters), above MSL</field>
                 <field type="int32_t" name="au_target_lat">Target waypoint latitude expressed as 1E7</field>
-                <field type="int32_t" name="au_target_lon">Target waypoint longitude expressed     as 1E7</field>
+                <field type="int32_t" name="au_target_lng">Target waypoint longitude expressed     as 1E7</field>
                 <field type="int32_t" name="au_target_alt">Target waypoint altitude expressed as 1000 (millimeters)</field>
                 <field type="int32_t" name="au_ground_speed">Ground speed in cm/sec</field>
+                <field type="int32_t" name="au_airspeed">Ground speed in cm/sec</field>
                 <field type="int32_t" name="au_target_bearing">Target bearing torward next waypoint in degress (0 to 360)</field>
                 <field type="int32_t" name="au_distance">Distance to next waypoint expressed in meters</field>
 		<field type="uint8_t" name="au_target_wp_index">The waypoint index of the target wp</field>

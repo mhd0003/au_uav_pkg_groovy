@@ -1,23 +1,29 @@
-/* PlaneObject */
+#ifndef _PLANE_OBJECT_H_
+#define _PLANE_OBJECT_H_
 
-#ifndef PLANE_OBJECT_H
-#define PLANE_OBJECT_H
+#include "ros/ros.h"
+#include <math.h>
 
-#include "au_uav_ros/TelemetryUpdate.h"
 #include "au_uav_ros/standardDefs.h"
 #include "au_uav_ros/standardFuncs.h"
 
+//Message Includes
+#include "au_uav_ros/Command.h"
+#include "au_uav_ros/Telemetry.h"
+
 namespace au_uav_ros {
-
 	class PlaneObject {
-
-        public:
+	public:
             /* Default constructor. Sets everything to zero. */
             PlaneObject(void);
+
+	    PlaneObject(struct waypoint wp);
+
+	    PlaneObject(int _id);
             
             /* Explicit value constructor: Takes a collision radius and a
             telemetry update and creates a new PlaneObject. */
-            PlaneObject(double cRadius, const au_uav_ros::TelemetryUpdate &msg);
+            PlaneObject(double cRadius, const Telemetry &msg);
 
             /* Mutator functions */
             void setID(int id);
@@ -26,23 +32,23 @@ namespace au_uav_ros {
             void setTargetBearing(double tBearing);		/* set bearing to destination */
             void setCurrentBearing(double cBearing); 	/* set current bearing in the air */
             void setSpeed(double speed);
-            void setDestination(const au_uav_ros::waypoint &destination);
+            //void setDestination(const waypoint &destination);
 
             void updateTime(void);
 
             /* Update the plane's data members with the information contained within the telemetry update. */
-            void update(const au_uav_ros::TelemetryUpdate &msg);
+            bool update(const Telemetry &msg, Command &newCommand);
 
             /* Accessor functions */
             int getID(void) const;
-            au_uav_ros::coordinate getPreviousLoc(void) const;
-            au_uav_ros::coordinate getCurrentLoc(void) const;
+            waypoint getPreviousLoc(void) const;
+            waypoint getCurrentLoc(void) const;
             double getTargetBearing(void) const;
             double getCurrentBearing(void) const;
             double getSpeed(void) const;
             double getLastUpdateTime(void) const;
-            au_uav_ros::waypoint getDestination(void) const;
-            
+            waypoint getDestination(void) const;
+            virtual double getSimSpeed(void) const;
 
             /* Find distance between this plane and another plane */
             double findDistance(const PlaneObject& plane) const;
@@ -60,7 +66,13 @@ namespace au_uav_ros {
             /* Returns true if a plane object is within the cRadius meters of this plane object, false otherwise */
             bool isColliding(const PlaneObject& planeObj) const;
 
-        private:
+	    void addAvoidanceWp(struct waypoint wp);
+	    void addNormalWp(struct waypoint wp);
+	    void removeAvoidanceWp(void);
+	    void removeNormalWp(struct waypoint wp);
+	    au_uav_ros::Command getPriorityCommand(void);
+
+        protected:
             /* Private data members */
             int id;
             double collisionRadius;
@@ -68,10 +80,10 @@ namespace au_uav_ros {
             double currentBearing;		/* get current bearing in the air */
             double speed;
             double lastUpdateTime;
-            au_uav_ros::coordinate previousLoc;	/*used to calculate currentBearing*/
-            au_uav_ros::coordinate currentLoc;
-            au_uav_ros::waypoint destination;
-    };
-};
-
+            waypoint previousLoc;	/*used to calculate currentBearing*/
+            waypoint currentLoc;
+		std::list<struct waypoint> normalPath;
+		waypoint avoidWp;
+	};
+}
 #endif

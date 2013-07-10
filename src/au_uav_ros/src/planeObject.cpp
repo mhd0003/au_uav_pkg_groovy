@@ -1,15 +1,8 @@
-/* Implementation of planeObject.h
-
-*/
-
-#include "ros/ros.h"
 #include "au_uav_ros/planeObject.h"
-#include "au_uav_ros/SimulatedPlane.h"
-#include <math.h>
-#include "au_uav_ros/standardFuncs.h" /* for PI, EARTH_RADIUS in meters */
+using namespace au_uav_ros;
 
 /* Implementation of the default constructor: Member variables are set to zero */
-au_uav_ros::PlaneObject::PlaneObject(void) {
+PlaneObject::PlaneObject(void) {
 	this->id = 0;
 	this->currentLoc.altitude = 0.0;
 	this->currentLoc.latitude = 0.0;
@@ -21,15 +14,38 @@ au_uav_ros::PlaneObject::PlaneObject(void) {
 	this->currentBearing = 0.0;
 
 	this->speed = 0.0;
-	this->destination.latitude = 0.0;
-	this->destination.longitude = 0.0;
-	this->destination.altitude = 0.0;
 	this->lastUpdateTime = ros::Time::now().toSec();
 	this->collisionRadius = 0.0;
 
+	avoidWp = INVALID_WP;
+
 }
-/* Explicit value constructor using TelemetryUpdate */
-au_uav_ros::PlaneObject::PlaneObject(double cRadius, const au_uav_ros::TelemetryUpdate &msg) {
+
+PlaneObject::PlaneObject(struct waypoint wp) {
+	this->id = wp.planeID;
+	this->currentLoc.altitude = 0.0;
+	this->currentLoc.latitude = 0.0;
+	this->currentLoc.longitude = 0.0;
+	this->previousLoc.altitude = 0.0;
+	this->previousLoc.latitude = 0.0;
+	this->previousLoc.longitude = 0.0;
+	this->targetBearing = 0.0;
+	this->currentBearing = 0.0;
+
+	this->speed = 0.0;
+	this->collisionRadius = 0.0;
+	this->lastUpdateTime = ros::Time::now().toSec();
+	this->normalPath.push_back(wp);
+
+	avoidWp = INVALID_WP;
+}
+
+PlaneObject::PlaneObject(int _id) {
+	this->id = _id;
+}
+
+/* Explicit value constructor using Telemetry */
+PlaneObject::PlaneObject(double cRadius, const Telemetry &msg) { 
 	this->id = msg.planeID;
 	this->currentLoc.altitude = msg.currentAltitude;
 	this->currentLoc.latitude = msg.currentLatitude;
@@ -41,117 +57,178 @@ au_uav_ros::PlaneObject::PlaneObject(double cRadius, const au_uav_ros::Telemetry
 	this->currentBearing = 0.0;
 
 	this->speed = msg.groundSpeed;
-	this->destination.latitude = msg.destLatitude;
-	this->destination.longitude = msg.destLongitude;
-	this->destination.altitude = msg.destAltitude;
+	waypoint wp;
+	wp.latitude = msg.destLatitude;
+	wp.longitude = msg.destLongitude;
+	wp.altitude = msg.destAltitude;
+	this->normalPath.push_back(wp);
 	this->lastUpdateTime = ros::Time::now().toSec();
 	this->collisionRadius = cRadius;
-
 }
 
 /* mutator functions to update member variables */
-void au_uav_ros::PlaneObject::setID(int id){
+void PlaneObject::setID(int id){
 	this->id = id;
 }
 
-void au_uav_ros::PlaneObject::setPreviousLoc(double lat, double lon, double alt) {
+void PlaneObject::setPreviousLoc(double lat, double lon, double alt) {
 	this->previousLoc.latitude = lat;
 	this->previousLoc.longitude = lon;
 	this->previousLoc.altitude = alt;
 }
 
-void au_uav_ros::PlaneObject::setCurrentLoc(double lat, double lon, double alt) {
+void PlaneObject::setCurrentLoc(double lat, double lon, double alt) {
 	this->currentLoc.latitude = lat;
 	this->currentLoc.longitude = lon;
 	this->currentLoc.altitude = alt;
 }
 
-void au_uav_ros::PlaneObject::setTargetBearing(double tBearing) {
+void PlaneObject::setTargetBearing(double tBearing) {
 	this->targetBearing = tBearing;
 }
 
-void au_uav_ros::PlaneObject::setCurrentBearing(double cBearing) {
+void PlaneObject::setCurrentBearing(double cBearing) {
 	this->currentBearing = cBearing;
 }
 
-void au_uav_ros::PlaneObject::setSpeed(double speed) {
+void PlaneObject::setSpeed(double speed) {
 	this->speed = speed;
 }
 
-void au_uav_ros::PlaneObject::setDestination(const au_uav_ros::waypoint &destination) {
-	this->destination = destination;
-}
-
-void au_uav_ros::PlaneObject::updateTime(void) {
+void PlaneObject::updateTime(void) {
 	this->lastUpdateTime = ros::Time::now().toSec();
 }
 
-
-void au_uav_ros::PlaneObject::update(const au_uav_ros::TelemetryUpdate &msg) {
-
+// md
+// 
+bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
 	//Update previous and current position
 	this->setPreviousLoc(this->currentLoc.latitude, this->currentLoc.longitude, this->currentLoc.altitude);
 	this->setCurrentLoc(msg.currentLatitude, msg.currentLongitude, msg.currentAltitude);
 	
-	//Calculate actual Cardinal Bearing
+	// md
+	// Changed from cardinal to cartesian.
+	// TODO: Get rid of those DELTA_LXX_TO_METERS constants
 	double numerator = (this->currentLoc.latitude - this->previousLoc.latitude);
 	double denominator = (this->currentLoc.longitude - this->previousLoc.longitude);
 	double angle = atan2(numerator*DELTA_LAT_TO_METERS,denominator*DELTA_LON_TO_METERS)*180/PI;
 
-	if (this->currentLoc.latitude != this->previousLoc.latitude && this->currentLoc.longitude != this->previousLoc.longitude)
-	{ 
-			this->setCurrentBearing(toCardinal(angle));
+	// md
+	if (numerator != 0 || denominator != 0) { 
+		this->setCurrentBearing(angle);
 	}
-	else this->setCurrentBearing(0.0);
 
 	// Update everything else
 	this->setTargetBearing(msg.targetBearing);
 	this->setSpeed(msg.groundSpeed);
 	this->updateTime();
+
+	//this bool is set true only if there is something available to be sent to the UAV
+	bool isCommand = false;
+
+	//this bool is set if the command available is an avoidance maneuver
+
+	//store the last update
+	//this->latestUpdate = update;
+
+	//first see if we need to dump any points from the avoidance path (dump wp if within 2s of it)
+	if((avoidWp != INVALID_WP) && msg.distanceToDestination > -WAYPOINT_THRESHOLD && msg.distanceToDestination < WAYPOINT_THRESHOLD)
+	{
+		// md
+		// TODO: What happens if plane pops all mission WPs and then later the CA node makes it avoid a plane?
+		//this means we reached the avoidance wp and so the next command should be issued
+		avoidWp = INVALID_WP;
+		isCommand = true;
+	}
+	//if here then destination is in normalPath
+	//next see if we need to dump any points from the normal path (dump wp if within 1s of it)
+	else if(!normalPath.empty() && msg.distanceToDestination > -WAYPOINT_THRESHOLD && msg.distanceToDestination < WAYPOINT_THRESHOLD)
+	{
+		//this means we met the normal path's waypoint, so pop it
+		normalPath.pop_front();
+		//if we pop'd a wp, and there is another wp in normalPath, command is true.
+		if (!normalPath.empty()) isCommand = true;
+	}
+
+
+	//if we have a command to process, process it
+	if(isCommand)
+	{
+		if (avoidWp != INVALID_WP) {
+			newCommand.commandID = COMMAND_AVOID_WP;
+			newCommand.commandHeader.stamp = ros::Time::now();
+			newCommand.planeID = id;
+			newCommand.latitude = avoidWp.latitude;
+			newCommand.longitude = avoidWp.longitude;
+			newCommand.altitude = avoidWp.altitude;
+			return true;
+		} else if (!normalPath.empty()) {
+			newCommand.commandID = COMMAND_NORMAL_WP;
+			newCommand.commandHeader.stamp = ros::Time::now();
+			newCommand.planeID = id;
+			newCommand.latitude = normalPath.front().latitude;
+			newCommand.longitude = normalPath.front().longitude;
+			newCommand.altitude = normalPath.front().altitude;
+			return true;
+		}
+	}
+		
+	else {
+		//if we get here, then avoidance queue is empty and no new wps need to be sent for normal path
+		return false;
+	}
 }
 
 /* accessor functions */
-int au_uav_ros::PlaneObject::getID(void) const {
+int PlaneObject::getID(void) const {
 	return this->id;
 }
 
-au_uav_ros::coordinate au_uav_ros::PlaneObject::getPreviousLoc(void) const {
+waypoint PlaneObject::getPreviousLoc(void) const {
 	return this->previousLoc;
 }
 
-au_uav_ros::coordinate au_uav_ros::PlaneObject::getCurrentLoc(void) const {
+waypoint PlaneObject::getCurrentLoc(void) const {
 	return this->currentLoc;
 }
 
-double au_uav_ros::PlaneObject::getTargetBearing(void) const {
+double PlaneObject::getTargetBearing(void) const {
 	return this->targetBearing;
 }
 
-double au_uav_ros::PlaneObject::getCurrentBearing(void) const {
+double PlaneObject::getCurrentBearing(void) const {
 	return this->currentBearing;
 }
 	
-double au_uav_ros::PlaneObject::getSpeed(void) const {
+double PlaneObject::getSpeed(void) const {
 	return this->speed;
 }
 
-double au_uav_ros::PlaneObject::getLastUpdateTime(void) const {
+double PlaneObject::getLastUpdateTime(void) const {
 	return this->lastUpdateTime;
 }
 
-au_uav_ros::waypoint au_uav_ros::PlaneObject::getDestination(void) const {
-	return this->destination;
+waypoint PlaneObject::getDestination(void) const {
+	if (avoidWp != INVALID_WP ) {
+		return avoidWp;
+	} else {
+		return normalPath.front();
+	}
+}
+
+double PlaneObject::getSimSpeed(void) const {
+	return 0;
 }
 
 /* Find distance between this plane and another plane, returns in meters */
-double au_uav_ros::PlaneObject::findDistance(const au_uav_ros::PlaneObject& plane) const {
+double PlaneObject::findDistance(const PlaneObject& plane) const {
 	return this->findDistance(plane.currentLoc.latitude, plane.currentLoc.longitude);
 }
 
 
 /* Find distance between this plane and another pair of coordinates, 
 returns value in meters */
-double au_uav_ros::PlaneObject::findDistance(double lat2, double lon2) const {
+double PlaneObject::findDistance(double lat2, double lon2) const {
 	double xdiff = (lon2 - this->currentLoc.longitude)*DELTA_LON_TO_METERS;
 	double ydiff = (lat2 - this->currentLoc.latitude)*DELTA_LAT_TO_METERS;
 
@@ -160,13 +237,13 @@ double au_uav_ros::PlaneObject::findDistance(double lat2, double lon2) const {
 
 /* Find Cartesian angle between this plane and another plane, using this plane
 as the origin */
-double au_uav_ros::PlaneObject::findAngle(const au_uav_ros::PlaneObject& plane) const {
+double PlaneObject::findAngle(const PlaneObject& plane) const {
 	return this->findAngle(plane.currentLoc.latitude, plane.currentLoc.longitude);
 }
 
 /* Find Cartesian angle between this plane and another plane's latitude/longitude 
 using this plane as the origin */
-double au_uav_ros::PlaneObject::findAngle(double lat2, double lon2) const {
+double PlaneObject::findAngle(double lat2, double lon2) const {
 	double xdiff = (lon2 - this->currentLoc.longitude)*DELTA_LON_TO_METERS;
 	double ydiff = (lat2 - this->currentLoc.latitude)*DELTA_LAT_TO_METERS;
 	
@@ -174,7 +251,7 @@ double au_uav_ros::PlaneObject::findAngle(double lat2, double lon2) const {
 }
 
 
-au_uav_ros::PlaneObject& au_uav_ros::PlaneObject::operator=(const au_uav_ros::PlaneObject& plane) {
+PlaneObject& PlaneObject::operator=(const PlaneObject& plane) {
 
 	this->id = plane.id;
 	this->currentLoc.altitude = plane.currentLoc.altitude;
@@ -185,9 +262,8 @@ au_uav_ros::PlaneObject& au_uav_ros::PlaneObject::operator=(const au_uav_ros::Pl
 	this->previousLoc.latitude = plane.previousLoc.latitude;
 	this->previousLoc.longitude = plane.previousLoc.longitude;
 
-	this->destination.latitude = plane.destination.latitude;
-	this->destination.longitude = plane.destination.longitude;
-	this->destination.altitude = plane.destination.latitude;
+	this->normalPath = plane.normalPath;
+	this->avoidWp = plane.avoidWp;
 
 	this->targetBearing = plane.targetBearing;
 	this->currentBearing = plane.currentBearing;
@@ -197,4 +273,64 @@ au_uav_ros::PlaneObject& au_uav_ros::PlaneObject::operator=(const au_uav_ros::Pl
 	this->collisionRadius = plane.collisionRadius;
 
 	return *this;
+}
+
+void PlaneObject::addNormalWp(struct au_uav_ros::waypoint wp) {
+	normalPath.push_back(wp);
+}
+
+void PlaneObject::addAvoidanceWp(struct au_uav_ros::waypoint wp) {
+	avoidWp = wp;
+}
+
+void PlaneObject::removeNormalWp(struct au_uav_ros::waypoint wp) {
+	std::list<waypoint>::iterator i;
+	for (i = normalPath.begin(); i != normalPath.end(); i++) {
+		if (wp == *i) {
+			break;
+		}	
+	}
+	if (i != normalPath.end()) {
+		normalPath.erase(i);
+	} else {
+		ROS_ERROR("Waypoint not found");
+	}
+}
+
+void PlaneObject::removeAvoidanceWp(void) {
+	avoidWp = INVALID_WP;
+}
+
+Command PlaneObject::getPriorityCommand(void) {
+	//start with defaults
+	Command ret;
+	ret.planeID = -1;
+	ret.latitude = -1000;
+	ret.longitude = -1000;
+	ret.altitude = -1000;
+
+	//check avoidance queue
+	if(avoidWp != INVALID_WP)
+	{
+		//we have an avoidance point, get that one
+		ret.planeID = this->id;
+		ret.latitude = avoidWp.latitude;
+		ret.longitude = avoidWp.longitude;
+		ret.altitude = avoidWp.altitude;
+		ret.commandID = COMMAND_AVOID_WP; 
+	}
+	else if (!normalPath.empty())
+	{
+		//we have a normal path point at least, fill it out
+		ret.planeID = this->id;
+		ret.latitude = normalPath.front().latitude;
+		ret.longitude = normalPath.front().longitude;
+		ret.altitude = normalPath.front().altitude;
+		ret.commandID = COMMAND_NORMAL_WP;
+
+	}
+
+	//fill out our header and return this bad boy
+	ret.commandHeader.stamp = ros::Time::now();
+	return ret;
 }

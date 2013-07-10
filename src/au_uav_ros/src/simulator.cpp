@@ -1,189 +1,134 @@
-/*
-simulator
-This simulator will act as a system for students to test a collision avoidance algorithm prior to real 
-physical tests.  It will need to mirror the XBeeIO ROS system along with provide realistic data about
-an ArduPilot's flight data.  We will need to look at some real data and maybe ArduPilot code in order to
-understand how this works.
-*/
+#include "au_uav_ros/simulator.h"
+using namespace au_uav_ros;
 
-//Standard C++ headers
-#include <sstream>
-#include <map>
+void Simulator::run(void) {
+	ros::spin();
+}
 
-//ROS headers
-#include "ros/ros.h"
-#include "au_uav_ros/standardDefs.h"
-#include "au_uav_ros/TelemetryUpdate.h"
-#include "au_uav_ros/Command.h"
-#include "au_uav_ros/RequestPlaneID.h"
-#include "au_uav_ros/CreateSimulatedPlane.h"
-#include "au_uav_ros/DeleteSimulatedPlane.h"
-#include "au_uav_ros/SimulatedPlane.h"
-#include "au_uav_ros/StartSimulator.h"
+void Simulator::init(ros::NodeHandle _n) {
+	n = _n;
+	setup();
+}
 
-//Coordinator Services
-ros::ServiceClient requestPlaneIDClient;
+void Simulator::setup(void) {
+	shutdownTopic = n.subscribe("component_shutdown", 1000, &Simulator::component_shutdown, this);
+	setFreqService = n.advertiseService("sim_freq", &Simulator::sim_freq, this);
+	setSimSpeed = n.advertiseService("sim_speed", &Simulator::sim_speed, this);
 
-//a map of plane IDs to the Simulated Plane with that ID
-std::map<int, au_uav_ros::SimulatedPlane> simPlaneMap;
+	managePlanesService = n.advertiseService("manage_simplanes", &Simulator::manage_simplanes, this);
 
-//global boolean to start this node.
-bool readyToStart = false;
+	telemetryTopic = n.advertise<au_uav_ros::Telemetry>("telemetry", 1000);
+	commandTopic = n.subscribe("commands", 1000, &Simulator::commands, this);
 
-/*
-commandCallback:
-This is the callback in place to handle any commands sent.  Note that not all commands will be destined for
-the simulator so it must be verified before proceeding with any commands.
-*/
-void commandCallback(const au_uav_ros::Command::ConstPtr& msg)
-{
-	//check to make sure that the plane ID is in the simulator
-	if(simPlaneMap.find(msg->planeID) != simPlaneMap.end())
-	{
-		//let the simulator handle the new command now
-		ROS_INFO("Received new message: Plane #%d to (%f, %f, %f)", msg->planeID, msg->latitude, msg->longitude, msg->altitude);
-		simPlaneMap[msg->planeID].handleNewCommand(*msg);
+	double temp;
+	// Set initial simulation frequency through launch file parameter
+	// Default to centralized
+	if (n.getParam("runSimFreq", temp)) {
+		simulateTimer = n.createWallTimer(ros::WallDuration(temp), &Simulator::simulate, this);
+	} else {
+		simulateTimer = n.createWallTimer(ros::WallDuration(1.0), &Simulator::simulate, this);
 	}
-	else
-	{
-		//we may want to remove this message eventually
-		ROS_INFO("Received message to non-simulated plane $%d", msg->planeID);
+	// if (n.getParam("runSimSpeed", temp)) {
+	// 	simulateTimer = n.createWallTimer(ros::WallDuration(temp), &Simulator::simulate, this);
+	// } else {
+	// 	simulateTimer = n.createWallTimer(ros::WallDuration(1.0), &Simulator::simulate, this);
+	
+	// Set de/centralized through launch file parameter
+	// Default to centralized
+	if (n.getParam("runCentralized", centralized)) {
+		//centralized = $(arg centralized)
+	} else {
+		centralized = true;
 	}
 }
 
-/*
-createSimulatePlaneCallback
-This is the callback used to handle any users wishing to create a new plane.  This could be used for setting
-up a course as well.
-*/
-bool createSimulatedPlaneCallback(au_uav_ros::CreateSimulatedPlane::Request &req, au_uav_ros::CreateSimulatedPlane::Response &res)
-{
-	//create a service to get a plane ID to use
-	au_uav_ros::RequestPlaneID srv;
-	srv.request.requestedID = req.requestedID;
-	
-	//check to make sure the client call worked (regardless of return values from service)
-	if(requestPlaneIDClient.call(srv))
-	{
-		res.planeID = srv.response.planeID;
-		
-		if(srv.response.planeID == -1)
-		{
-			ROS_ERROR("Couldn't create plane with ID %d", req.requestedID);
-			return false;
-		}
-		
-		//create and add our plane to the list of simulated planes
-		//au_uav_ros::SimulatedPlane newPlane(srv.response.planeID, req);
-		simPlaneMap[srv.response.planeID] = au_uav_ros::SimulatedPlane(srv.response.planeID, req);
-		
-		//plane created successfully
-		return true;
-	}
-	else
-	{
-		//if this happens, chances are the coordinator isn't running
-		ROS_ERROR("Did not receive an ID from coordinator");
-		return false;
-	}
+void Simulator::component_shutdown(const std_msgs::String::ConstPtr &msg) {
+	ros::shutdown();
 }
 
-/*
-deleteSimulatedPlaneCallback
-This callback will remove a plane from the simulator and stop it from sending updates. NOTE: this does not
-free up that plane ID in the coordinator.  New planes will still have higher IDs.
-*/
-bool deleteSimulatedPlaneCallback(au_uav_ros::DeleteSimulatedPlane::Request &req, au_uav_ros::DeleteSimulatedPlane::Response &res)
-{
-	//check to make sure the plane is simulated
-	if(simPlaneMap.find(req.planeID) != simPlaneMap.end())
-	{
-		//we found it, erase that bad boy
-		simPlaneMap.erase(req.planeID);
-		return true;
-	}
-	else
-	{
-		//this plane must not be simulated, silly user!
-		ROS_ERROR("No simulated plane with ID #%d", req.planeID);
-		return false;
-	}
+bool Simulator::sim_freq(Double::Request &req, Double::Response &res) {
+	simulateTimer = n.createWallTimer(ros::WallDuration(req.val), &Simulator::simulate, this);
+
+	return true;
 }
 
-bool startSimulator(au_uav_ros::StartSimulator::Request &req, au_uav_ros::StartSimulator::Response &res)
-{
-    //ROS_INFO(req.indicator);
-    readyToStart = true;
-    
-    // we shouldn't ever have an error, so populate it with "passed"
-    res.error = "passed";
-    return true;
+bool Simulator::sim_speed(Double::Request &req, Double::Response &res) {
+	std::map<int, SimPlaneObject>::iterator i;
+	for (i = simPlanes.begin(); i != simPlanes.end(); i++) {
+		i->second.setSimSpeed(req.val);
+	}
+	return true;
 }
 
-int main(int argc, char **argv)
-{
-	//Standard ROS startup
-	ros::init(argc, argv, "simulator");
-	ros::NodeHandle n;
-
-        //init service to start this node        
-	ros::ServiceServer startSimulatorServer = n.advertiseService("start_simulator", startSimulator);
-
-	ros::Rate r(10); // 10 hz
-        while (!readyToStart)
-        {
-        ros::spinOnce();
-        r.sleep();
-        }
-
-	
-	//setup subscribing to command messages
-	ros::Subscriber sub = n.subscribe("commands", 1000, commandCallback);
-	
-	//setup publishing to telemetry message
-	ros::Publisher telemetryPub = n.advertise<au_uav_ros::TelemetryUpdate>("telemetry", 1000);
-	
-	//setup server services
-	ros::ServiceServer createSimulatedPlaneService = n.advertiseService("create_simulated_plane", createSimulatedPlaneCallback);
-	ros::ServiceServer deleteSimulatedPlaneService = n.advertiseService("delete_simulated_plane", deleteSimulatedPlaneCallback);
-	
-	//setup client services
-	requestPlaneIDClient = n.serviceClient<au_uav_ros::RequestPlaneID>("request_plane_ID");
-	
-	//TODO:check for validity of 1 Hz
-	//currently updates at 1 Hz, based of Justin Paladino'sestimate of approximately 1 update/sec
-	int loopRate = 1;
-	int loopMultiple = 10;
-	int loopPosition = 0;
-	
-	//we multiply so we can spin more
-	ros::Rate loop_rate(loopMultiple*loopRate);
-	 
-	//while the user doesn't kill the process or we get some crazy error
-	while(ros::ok())
-	{
-		//first check for callbacks
-		ros::spinOnce();
-		
-		//only run the update once every ten cycles
-		if(loopPosition == 0)
-		{
-			//prep to send some updates
-			au_uav_ros::TelemetryUpdate tUpdate;
-			std::map<int, au_uav_ros::SimulatedPlane>::iterator ii;
-		
-			//iterate through all simulated planes and generate an update for each
-			for(ii = simPlaneMap.begin(); ii != simPlaneMap.end(); ii++)
-			{
-				ii->second.fillTelemetryUpdate(&tUpdate);
-				telemetryPub.publish(tUpdate);
+bool Simulator::manage_simplanes(au_uav_ros::SimPlane::Request &req, au_uav_ros::SimPlane::Response &res) {
+	if (req.clear) {
+		simPlanes.clear();
+	}
+	else if (simPlanes.find(req.planeID) != simPlanes.end()) {
+		if (req.size == 0) { //no waypoints given so delete the plane
+			simPlanes.erase(req.planeID);
+		} else {
+			if (req.add) {
+				waypoint wp;
+				wp.latitude = req.latitudes.front();
+				wp.longitude = req.longitudes.front();
+				wp.altitude = req.altitudes.front();
+				simPlanes[req.planeID].addNormalWp(wp);
+			} else {
+				//TODO simPlanes[req.planeID].removeWp();
 			}
 		}
-		
-		//sleep until next update cycle
-		loopPosition = (loopPosition+1)%loopMultiple;
-		loop_rate.sleep();
+	} else {//new plane id so add it to map
+		simPlanes[req.planeID] = SimPlaneObject();
+		simPlanes[req.planeID].setID(req.planeID);
+		simPlanes[req.planeID].setCurrentLoc(req.latitudes[0], req.longitudes[0], req.altitudes[0]);
+		for (int i = 1; i < req.size; i++) {
+			waypoint wp;
+			wp.latitude = req.latitudes[i];
+			wp.longitude = req.longitudes[i];
+			wp.altitude = req.altitudes[i];
+			simPlanes[req.planeID].addNormalWp(wp);
+		}
+
+		double temp;
+		if (n.getParam("runSimSpeed", temp)) {
+			simPlanes[req.planeID].setSimSpeed(temp);
+		} else {
+			simPlanes[req.planeID].setSimSpeed(1.0);
+		}
 	}
-	
-	return 0;
+	res.error = "None";
+	return true;
+}
+
+void Simulator::commands(const au_uav_ros::Command &cmd) {
+	if (simPlanes.find(cmd.planeID) != simPlanes.end()) {
+		simPlanes[cmd.planeID].handleNewCommand(cmd);
+	}
+}
+
+void Simulator::simulate(const ros::WallTimerEvent &e) {
+	double duration = (e.current_real - e.last_real).toSec();
+	if (e.profile.last_duration.toSec() == 0) { //on startup this should be zero 
+		return;
+	} else {
+		double stamp = ros::Time::now().toSec();
+		std::map<int, SimPlaneObject>::iterator i;
+		for (i = simPlanes.begin(); i != simPlanes.end(); i++) {
+			Telemetry telem;
+			i->second.simulate(duration, &telem);
+			telemetryTopic.publish(telem);
+			duration += (ros::Time::now().toSec() - stamp);
+			stamp = ros::Time::now().toSec();
+		} 
+	}
+}
+
+int main(int argc, char **argv) {
+	ros::init(argc, argv, "Simulator");
+	ros::NodeHandle n;
+	Simulator s;
+	s.init(n);
+	s.run();
+	return 1;
 }

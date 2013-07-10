@@ -3,14 +3,16 @@ standardDefs.h
 This file is meant to contain things that are used across multiple executables that don't change
 */
 
-#ifndef STANDARD_DEFS_H
-#define STANDARD_DEFS_H
+#ifndef _STANDARD_DEFS_H_
+#define _STANDARD_DEFS_H_
 
 #include <math.h>
+#include "boost/thread.hpp"
 
 //12 meters - set to this because simulator makes 11 meter jumps
 #define COLLISION_THRESHOLD 12 //meters
 #define CONFLICT_THRESHOLD 24 //meters
+#define WAYPOINT_THRESHOLD 30
 
 /*UAV SPECIFIC DEFINES*/
 //25 mph = 11.17600 meters / second
@@ -30,11 +32,12 @@ Many defines for simulator calculations
 #define LATITUDE_TO_METERS (111200.0)
 #define METERS_TO_LATITUDE (1.0/111200.0)
 
-//Used for wind simulation until symbiotic simulation is added
-#define WIND_DIRECTION		180
-//maximum wind_speed is 9 mph
-#define MPH_WIND_SPEED		4
-
+/*
+Command Types for Xbee mavlink command types
+*/
+#define COMMAND_NORMAL_WP 1
+#define COMMAND_AVOID_WP 2
+#define COMMAND_SET_ID 3
 
 namespace au_uav_ros
 {
@@ -44,7 +47,19 @@ namespace au_uav_ros
 		double latitude;
 		double longitude;
 		double altitude;
+		int planeID;
+
+		waypoint(void) {
+			latitude = -1000.0;
+			longitude = -1000.0;
+			altitude = -1000.0;
+			planeID = -1;
+		}
 	};
+
+	//Mutex to lock serial port read and writes
+	boost::mutex serialPort;
+	waypoint INVALID_WP;
 }
 
 /*
@@ -66,4 +81,7 @@ the earth's curvature.
 */
 double distanceBetween(struct au_uav_ros::waypoint first, struct au_uav_ros::waypoint second);
 
+bool operator==(const struct au_uav_ros::waypoint &wp1, const struct au_uav_ros::waypoint &wp2);
+
+bool operator!=(const struct au_uav_ros::waypoint &wp1, const struct au_uav_ros::waypoint &wp2);
 #endif

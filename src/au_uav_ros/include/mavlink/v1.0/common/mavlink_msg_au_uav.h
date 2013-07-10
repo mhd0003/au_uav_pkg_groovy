@@ -4,26 +4,27 @@
 
 typedef struct __mavlink_au_uav_t
 {
- int32_t au_lat; ///< Current latitude
- int32_t au_lng; ///< Current longitude
- int32_t au_alt; ///< Current altitude
- int32_t au_target_lat; ///< Target latitude
- int32_t au_target_lng; ///< Target longitude
- int32_t au_target_alt; ///< Target altitude
- int32_t au_ground_speed; ///< Current ground speed
- int32_t au_target_bearing; ///< Desired bearing to wp in degrees
- int32_t au_distance; ///< Distance to target waypoint
- uint8_t au_target_wp_index; ///< Target waypoint index
+ int32_t au_lat; ///< Latitude, expressed as * 1E7
+ int32_t au_lng; ///< Longitude, expressed as * 1E7
+ int32_t au_alt; ///< Altitude in meters, expressed as * 1000 (millimeters), above MSL
+ int32_t au_target_lat; ///< Target waypoint latitude expressed as 1E7
+ int32_t au_target_lng; ///< Target waypoint longitude expressed     as 1E7
+ int32_t au_target_alt; ///< Target waypoint altitude expressed as 1000 (millimeters)
+ int32_t au_ground_speed; ///< Ground speed in cm/sec
+ int32_t au_airspeed; ///< Ground speed in cm/sec
+ int32_t au_target_bearing; ///< Target bearing torward next waypoint in degress (0 to 360)
+ int32_t au_distance; ///< Distance to next waypoint expressed in meters
+ uint8_t au_target_wp_index; ///< The waypoint index of the target wp
 } mavlink_au_uav_t;
 
-#define MAVLINK_MSG_ID_AU_UAV_LEN 37
-#define MAVLINK_MSG_ID_199_LEN 37
+#define MAVLINK_MSG_ID_AU_UAV_LEN 41
+#define MAVLINK_MSG_ID_199_LEN 41
 
 
 
 #define MAVLINK_MESSAGE_INFO_AU_UAV { \
 	"AU_UAV", \
-	10, \
+	11, \
 	{  { "au_lat", NULL, MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_au_uav_t, au_lat) }, \
          { "au_lng", NULL, MAVLINK_TYPE_INT32_T, 0, 4, offsetof(mavlink_au_uav_t, au_lng) }, \
          { "au_alt", NULL, MAVLINK_TYPE_INT32_T, 0, 8, offsetof(mavlink_au_uav_t, au_alt) }, \
@@ -31,9 +32,10 @@ typedef struct __mavlink_au_uav_t
          { "au_target_lng", NULL, MAVLINK_TYPE_INT32_T, 0, 16, offsetof(mavlink_au_uav_t, au_target_lng) }, \
          { "au_target_alt", NULL, MAVLINK_TYPE_INT32_T, 0, 20, offsetof(mavlink_au_uav_t, au_target_alt) }, \
          { "au_ground_speed", NULL, MAVLINK_TYPE_INT32_T, 0, 24, offsetof(mavlink_au_uav_t, au_ground_speed) }, \
-         { "au_target_bearing", NULL, MAVLINK_TYPE_INT32_T, 0, 28, offsetof(mavlink_au_uav_t, au_target_bearing) }, \
-         { "au_distance", NULL, MAVLINK_TYPE_INT32_T, 0, 32, offsetof(mavlink_au_uav_t, au_distance) }, \
-         { "au_target_wp_index", NULL, MAVLINK_TYPE_UINT8_T, 0, 36, offsetof(mavlink_au_uav_t, au_target_wp_index) }, \
+         { "au_airspeed", NULL, MAVLINK_TYPE_INT32_T, 0, 28, offsetof(mavlink_au_uav_t, au_airspeed) }, \
+         { "au_target_bearing", NULL, MAVLINK_TYPE_INT32_T, 0, 32, offsetof(mavlink_au_uav_t, au_target_bearing) }, \
+         { "au_distance", NULL, MAVLINK_TYPE_INT32_T, 0, 36, offsetof(mavlink_au_uav_t, au_distance) }, \
+         { "au_target_wp_index", NULL, MAVLINK_TYPE_UINT8_T, 0, 40, offsetof(mavlink_au_uav_t, au_target_wp_index) }, \
          } \
 }
 
@@ -44,23 +46,24 @@ typedef struct __mavlink_au_uav_t
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param msg The MAVLink message to compress the data into
  *
- * @param au_lat Current latitude
- * @param au_lng Current longitude
- * @param au_alt Current altitude
- * @param au_target_lat Target latitude
- * @param au_target_lng Target longitude
- * @param au_target_alt Target altitude
- * @param au_ground_speed Current ground speed
- * @param au_target_bearing Desired bearing to wp in degrees
- * @param au_distance Distance to target waypoint
- * @param au_target_wp_index Target waypoint index
+ * @param au_lat Latitude, expressed as * 1E7
+ * @param au_lng Longitude, expressed as * 1E7
+ * @param au_alt Altitude in meters, expressed as * 1000 (millimeters), above MSL
+ * @param au_target_lat Target waypoint latitude expressed as 1E7
+ * @param au_target_lng Target waypoint longitude expressed     as 1E7
+ * @param au_target_alt Target waypoint altitude expressed as 1000 (millimeters)
+ * @param au_ground_speed Ground speed in cm/sec
+ * @param au_airspeed Ground speed in cm/sec
+ * @param au_target_bearing Target bearing torward next waypoint in degress (0 to 360)
+ * @param au_distance Distance to next waypoint expressed in meters
+ * @param au_target_wp_index The waypoint index of the target wp
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_au_uav_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-						       int32_t au_lat, int32_t au_lng, int32_t au_alt, int32_t au_target_lat, int32_t au_target_lng, int32_t au_target_alt, int32_t au_ground_speed, int32_t au_target_bearing, int32_t au_distance, uint8_t au_target_wp_index)
+						       int32_t au_lat, int32_t au_lng, int32_t au_alt, int32_t au_target_lat, int32_t au_target_lng, int32_t au_target_alt, int32_t au_ground_speed, int32_t au_airspeed, int32_t au_target_bearing, int32_t au_distance, uint8_t au_target_wp_index)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[37];
+	char buf[41];
 	_mav_put_int32_t(buf, 0, au_lat);
 	_mav_put_int32_t(buf, 4, au_lng);
 	_mav_put_int32_t(buf, 8, au_alt);
@@ -68,11 +71,12 @@ static inline uint16_t mavlink_msg_au_uav_pack(uint8_t system_id, uint8_t compon
 	_mav_put_int32_t(buf, 16, au_target_lng);
 	_mav_put_int32_t(buf, 20, au_target_alt);
 	_mav_put_int32_t(buf, 24, au_ground_speed);
-	_mav_put_int32_t(buf, 28, au_target_bearing);
-	_mav_put_int32_t(buf, 32, au_distance);
-	_mav_put_uint8_t(buf, 36, au_target_wp_index);
+	_mav_put_int32_t(buf, 28, au_airspeed);
+	_mav_put_int32_t(buf, 32, au_target_bearing);
+	_mav_put_int32_t(buf, 36, au_distance);
+	_mav_put_uint8_t(buf, 40, au_target_wp_index);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 37);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 41);
 #else
 	mavlink_au_uav_t packet;
 	packet.au_lat = au_lat;
@@ -82,15 +86,16 @@ static inline uint16_t mavlink_msg_au_uav_pack(uint8_t system_id, uint8_t compon
 	packet.au_target_lng = au_target_lng;
 	packet.au_target_alt = au_target_alt;
 	packet.au_ground_speed = au_ground_speed;
+	packet.au_airspeed = au_airspeed;
 	packet.au_target_bearing = au_target_bearing;
 	packet.au_distance = au_distance;
 	packet.au_target_wp_index = au_target_wp_index;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 37);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 41);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_AU_UAV;
-	return mavlink_finalize_message(msg, system_id, component_id, 37, 58);
+	return mavlink_finalize_message(msg, system_id, component_id, 41, 222);
 }
 
 /**
@@ -99,24 +104,25 @@ static inline uint16_t mavlink_msg_au_uav_pack(uint8_t system_id, uint8_t compon
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
  * @param msg The MAVLink message to compress the data into
- * @param au_lat Current latitude
- * @param au_lng Current longitude
- * @param au_alt Current altitude
- * @param au_target_lat Target latitude
- * @param au_target_lng Target longitude
- * @param au_target_alt Target altitude
- * @param au_ground_speed Current ground speed
- * @param au_target_bearing Desired bearing to wp in degrees
- * @param au_distance Distance to target waypoint
- * @param au_target_wp_index Target waypoint index
+ * @param au_lat Latitude, expressed as * 1E7
+ * @param au_lng Longitude, expressed as * 1E7
+ * @param au_alt Altitude in meters, expressed as * 1000 (millimeters), above MSL
+ * @param au_target_lat Target waypoint latitude expressed as 1E7
+ * @param au_target_lng Target waypoint longitude expressed     as 1E7
+ * @param au_target_alt Target waypoint altitude expressed as 1000 (millimeters)
+ * @param au_ground_speed Ground speed in cm/sec
+ * @param au_airspeed Ground speed in cm/sec
+ * @param au_target_bearing Target bearing torward next waypoint in degress (0 to 360)
+ * @param au_distance Distance to next waypoint expressed in meters
+ * @param au_target_wp_index The waypoint index of the target wp
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_au_uav_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
 							   mavlink_message_t* msg,
-						           int32_t au_lat,int32_t au_lng,int32_t au_alt,int32_t au_target_lat,int32_t au_target_lng,int32_t au_target_alt,int32_t au_ground_speed,int32_t au_target_bearing,int32_t au_distance,uint8_t au_target_wp_index)
+						           int32_t au_lat,int32_t au_lng,int32_t au_alt,int32_t au_target_lat,int32_t au_target_lng,int32_t au_target_alt,int32_t au_ground_speed,int32_t au_airspeed,int32_t au_target_bearing,int32_t au_distance,uint8_t au_target_wp_index)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[37];
+	char buf[41];
 	_mav_put_int32_t(buf, 0, au_lat);
 	_mav_put_int32_t(buf, 4, au_lng);
 	_mav_put_int32_t(buf, 8, au_alt);
@@ -124,11 +130,12 @@ static inline uint16_t mavlink_msg_au_uav_pack_chan(uint8_t system_id, uint8_t c
 	_mav_put_int32_t(buf, 16, au_target_lng);
 	_mav_put_int32_t(buf, 20, au_target_alt);
 	_mav_put_int32_t(buf, 24, au_ground_speed);
-	_mav_put_int32_t(buf, 28, au_target_bearing);
-	_mav_put_int32_t(buf, 32, au_distance);
-	_mav_put_uint8_t(buf, 36, au_target_wp_index);
+	_mav_put_int32_t(buf, 28, au_airspeed);
+	_mav_put_int32_t(buf, 32, au_target_bearing);
+	_mav_put_int32_t(buf, 36, au_distance);
+	_mav_put_uint8_t(buf, 40, au_target_wp_index);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 37);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 41);
 #else
 	mavlink_au_uav_t packet;
 	packet.au_lat = au_lat;
@@ -138,15 +145,16 @@ static inline uint16_t mavlink_msg_au_uav_pack_chan(uint8_t system_id, uint8_t c
 	packet.au_target_lng = au_target_lng;
 	packet.au_target_alt = au_target_alt;
 	packet.au_ground_speed = au_ground_speed;
+	packet.au_airspeed = au_airspeed;
 	packet.au_target_bearing = au_target_bearing;
 	packet.au_distance = au_distance;
 	packet.au_target_wp_index = au_target_wp_index;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 37);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 41);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_AU_UAV;
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 37, 58);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 41, 222);
 }
 
 /**
@@ -159,30 +167,31 @@ static inline uint16_t mavlink_msg_au_uav_pack_chan(uint8_t system_id, uint8_t c
  */
 static inline uint16_t mavlink_msg_au_uav_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_au_uav_t* au_uav)
 {
-	return mavlink_msg_au_uav_pack(system_id, component_id, msg, au_uav->au_lat, au_uav->au_lng, au_uav->au_alt, au_uav->au_target_lat, au_uav->au_target_lng, au_uav->au_target_alt, au_uav->au_ground_speed, au_uav->au_target_bearing, au_uav->au_distance, au_uav->au_target_wp_index);
+	return mavlink_msg_au_uav_pack(system_id, component_id, msg, au_uav->au_lat, au_uav->au_lng, au_uav->au_alt, au_uav->au_target_lat, au_uav->au_target_lng, au_uav->au_target_alt, au_uav->au_ground_speed, au_uav->au_airspeed, au_uav->au_target_bearing, au_uav->au_distance, au_uav->au_target_wp_index);
 }
 
 /**
  * @brief Send a au_uav message
  * @param chan MAVLink channel to send the message
  *
- * @param au_lat Current latitude
- * @param au_lng Current longitude
- * @param au_alt Current altitude
- * @param au_target_lat Target latitude
- * @param au_target_lng Target longitude
- * @param au_target_alt Target altitude
- * @param au_ground_speed Current ground speed
- * @param au_target_bearing Desired bearing to wp in degrees
- * @param au_distance Distance to target waypoint
- * @param au_target_wp_index Target waypoint index
+ * @param au_lat Latitude, expressed as * 1E7
+ * @param au_lng Longitude, expressed as * 1E7
+ * @param au_alt Altitude in meters, expressed as * 1000 (millimeters), above MSL
+ * @param au_target_lat Target waypoint latitude expressed as 1E7
+ * @param au_target_lng Target waypoint longitude expressed     as 1E7
+ * @param au_target_alt Target waypoint altitude expressed as 1000 (millimeters)
+ * @param au_ground_speed Ground speed in cm/sec
+ * @param au_airspeed Ground speed in cm/sec
+ * @param au_target_bearing Target bearing torward next waypoint in degress (0 to 360)
+ * @param au_distance Distance to next waypoint expressed in meters
+ * @param au_target_wp_index The waypoint index of the target wp
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_au_uav_send(mavlink_channel_t chan, int32_t au_lat, int32_t au_lng, int32_t au_alt, int32_t au_target_lat, int32_t au_target_lng, int32_t au_target_alt, int32_t au_ground_speed, int32_t au_target_bearing, int32_t au_distance, uint8_t au_target_wp_index)
+static inline void mavlink_msg_au_uav_send(mavlink_channel_t chan, int32_t au_lat, int32_t au_lng, int32_t au_alt, int32_t au_target_lat, int32_t au_target_lng, int32_t au_target_alt, int32_t au_ground_speed, int32_t au_airspeed, int32_t au_target_bearing, int32_t au_distance, uint8_t au_target_wp_index)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[37];
+	char buf[41];
 	_mav_put_int32_t(buf, 0, au_lat);
 	_mav_put_int32_t(buf, 4, au_lng);
 	_mav_put_int32_t(buf, 8, au_alt);
@@ -190,11 +199,12 @@ static inline void mavlink_msg_au_uav_send(mavlink_channel_t chan, int32_t au_la
 	_mav_put_int32_t(buf, 16, au_target_lng);
 	_mav_put_int32_t(buf, 20, au_target_alt);
 	_mav_put_int32_t(buf, 24, au_ground_speed);
-	_mav_put_int32_t(buf, 28, au_target_bearing);
-	_mav_put_int32_t(buf, 32, au_distance);
-	_mav_put_uint8_t(buf, 36, au_target_wp_index);
+	_mav_put_int32_t(buf, 28, au_airspeed);
+	_mav_put_int32_t(buf, 32, au_target_bearing);
+	_mav_put_int32_t(buf, 36, au_distance);
+	_mav_put_uint8_t(buf, 40, au_target_wp_index);
 
-	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_AU_UAV, buf, 37, 58);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_AU_UAV, buf, 41, 222);
 #else
 	mavlink_au_uav_t packet;
 	packet.au_lat = au_lat;
@@ -204,11 +214,12 @@ static inline void mavlink_msg_au_uav_send(mavlink_channel_t chan, int32_t au_la
 	packet.au_target_lng = au_target_lng;
 	packet.au_target_alt = au_target_alt;
 	packet.au_ground_speed = au_ground_speed;
+	packet.au_airspeed = au_airspeed;
 	packet.au_target_bearing = au_target_bearing;
 	packet.au_distance = au_distance;
 	packet.au_target_wp_index = au_target_wp_index;
 
-	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_AU_UAV, (const char *)&packet, 37, 58);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_AU_UAV, (const char *)&packet, 41, 222);
 #endif
 }
 
@@ -220,7 +231,7 @@ static inline void mavlink_msg_au_uav_send(mavlink_channel_t chan, int32_t au_la
 /**
  * @brief Get field au_lat from au_uav message
  *
- * @return Current latitude
+ * @return Latitude, expressed as * 1E7
  */
 static inline int32_t mavlink_msg_au_uav_get_au_lat(const mavlink_message_t* msg)
 {
@@ -230,7 +241,7 @@ static inline int32_t mavlink_msg_au_uav_get_au_lat(const mavlink_message_t* msg
 /**
  * @brief Get field au_lng from au_uav message
  *
- * @return Current longitude
+ * @return Longitude, expressed as * 1E7
  */
 static inline int32_t mavlink_msg_au_uav_get_au_lng(const mavlink_message_t* msg)
 {
@@ -240,7 +251,7 @@ static inline int32_t mavlink_msg_au_uav_get_au_lng(const mavlink_message_t* msg
 /**
  * @brief Get field au_alt from au_uav message
  *
- * @return Current altitude
+ * @return Altitude in meters, expressed as * 1000 (millimeters), above MSL
  */
 static inline int32_t mavlink_msg_au_uav_get_au_alt(const mavlink_message_t* msg)
 {
@@ -250,7 +261,7 @@ static inline int32_t mavlink_msg_au_uav_get_au_alt(const mavlink_message_t* msg
 /**
  * @brief Get field au_target_lat from au_uav message
  *
- * @return Target latitude
+ * @return Target waypoint latitude expressed as 1E7
  */
 static inline int32_t mavlink_msg_au_uav_get_au_target_lat(const mavlink_message_t* msg)
 {
@@ -260,7 +271,7 @@ static inline int32_t mavlink_msg_au_uav_get_au_target_lat(const mavlink_message
 /**
  * @brief Get field au_target_lng from au_uav message
  *
- * @return Target longitude
+ * @return Target waypoint longitude expressed     as 1E7
  */
 static inline int32_t mavlink_msg_au_uav_get_au_target_lng(const mavlink_message_t* msg)
 {
@@ -270,7 +281,7 @@ static inline int32_t mavlink_msg_au_uav_get_au_target_lng(const mavlink_message
 /**
  * @brief Get field au_target_alt from au_uav message
  *
- * @return Target altitude
+ * @return Target waypoint altitude expressed as 1000 (millimeters)
  */
 static inline int32_t mavlink_msg_au_uav_get_au_target_alt(const mavlink_message_t* msg)
 {
@@ -280,7 +291,7 @@ static inline int32_t mavlink_msg_au_uav_get_au_target_alt(const mavlink_message
 /**
  * @brief Get field au_ground_speed from au_uav message
  *
- * @return Current ground speed
+ * @return Ground speed in cm/sec
  */
 static inline int32_t mavlink_msg_au_uav_get_au_ground_speed(const mavlink_message_t* msg)
 {
@@ -288,33 +299,43 @@ static inline int32_t mavlink_msg_au_uav_get_au_ground_speed(const mavlink_messa
 }
 
 /**
- * @brief Get field au_target_bearing from au_uav message
+ * @brief Get field au_airspeed from au_uav message
  *
- * @return Desired bearing to wp in degrees
+ * @return Ground speed in cm/sec
  */
-static inline int32_t mavlink_msg_au_uav_get_au_target_bearing(const mavlink_message_t* msg)
+static inline int32_t mavlink_msg_au_uav_get_au_airspeed(const mavlink_message_t* msg)
 {
 	return _MAV_RETURN_int32_t(msg,  28);
 }
 
 /**
- * @brief Get field au_distance from au_uav message
+ * @brief Get field au_target_bearing from au_uav message
  *
- * @return Distance to target waypoint
+ * @return Target bearing torward next waypoint in degress (0 to 360)
  */
-static inline int32_t mavlink_msg_au_uav_get_au_distance(const mavlink_message_t* msg)
+static inline int32_t mavlink_msg_au_uav_get_au_target_bearing(const mavlink_message_t* msg)
 {
 	return _MAV_RETURN_int32_t(msg,  32);
 }
 
 /**
+ * @brief Get field au_distance from au_uav message
+ *
+ * @return Distance to next waypoint expressed in meters
+ */
+static inline int32_t mavlink_msg_au_uav_get_au_distance(const mavlink_message_t* msg)
+{
+	return _MAV_RETURN_int32_t(msg,  36);
+}
+
+/**
  * @brief Get field au_target_wp_index from au_uav message
  *
- * @return Target waypoint index
+ * @return The waypoint index of the target wp
  */
 static inline uint8_t mavlink_msg_au_uav_get_au_target_wp_index(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_uint8_t(msg,  36);
+	return _MAV_RETURN_uint8_t(msg,  40);
 }
 
 /**
@@ -333,10 +354,11 @@ static inline void mavlink_msg_au_uav_decode(const mavlink_message_t* msg, mavli
 	au_uav->au_target_lng = mavlink_msg_au_uav_get_au_target_lng(msg);
 	au_uav->au_target_alt = mavlink_msg_au_uav_get_au_target_alt(msg);
 	au_uav->au_ground_speed = mavlink_msg_au_uav_get_au_ground_speed(msg);
+	au_uav->au_airspeed = mavlink_msg_au_uav_get_au_airspeed(msg);
 	au_uav->au_target_bearing = mavlink_msg_au_uav_get_au_target_bearing(msg);
 	au_uav->au_distance = mavlink_msg_au_uav_get_au_distance(msg);
 	au_uav->au_target_wp_index = mavlink_msg_au_uav_get_au_target_wp_index(msg);
 #else
-	memcpy(au_uav, _MAV_PAYLOAD(msg), 37);
+	memcpy(au_uav, _MAV_PAYLOAD(msg), 41);
 #endif
 }

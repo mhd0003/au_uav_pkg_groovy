@@ -1,0 +1,45 @@
+<!-- Launch file for simulations -->
+<!-- Defaults to decentralized, no XBeeIO, but with GUI -->
+
+<launch>
+	<arg name="sim_speed" default="5.0" />
+	<param name="runSimSpeed" value="$(arg sim_speed)" type="double" />
+	
+	<arg name="sim_freq" default="0.2" />
+	<param name="runSimFreq" value="$(arg sim_freq)" type="double" />
+	
+	<!-- To run centralized, do: -->
+	<!-- roslaunch au_uav_ros launch.launch centralized:=true -->
+	<arg name="centralized" default="false" />
+	<!-- Parameter for nodes to access -->
+	<param name="runCentralized" value="$(arg centralized)" type="bool" />	
+	
+	<!-- If XBeeIO is desired, do: -->
+	<!-- roslaunch au_uav_ros decentralized.launch XBeeIO:=true-->
+	<arg name="XBeeIO" default="false" />
+	<!-- If GUI is not desired, do: -->
+	<!-- roslaunch au_uav_ros decentralized.launch GUI:=false-->
+	<arg name="GUI" default="true" />
+	<!-- If rqt_console is not desired, do: -->
+	<!-- roslaunch au_uav_ros decentralized.launch view_log:=false-->
+	<arg name="view_log" default="true" />
+	
+	<!-- XBeeIO nodes -->
+	<group if="$(arg XBeeIO)">
+		<node name="xbeeIn" pkg="au_uav_ros" type="xbeeIn"/>
+		<node name="xbeeOut" pkg="au_uav_ros" type="xbeeOut"/>
+	</group>
+	
+	<!-- GUI nodes -->
+	<group if="$(arg GUI)">
+		<node name="guiInterfacer" pkg="au_uav_ros" type="guiInterfacer"/>
+		<node name="au_uav_gui" pkg="au_uav_gui" type="au_uav_gui" output="screen" required="true"/>
+	</group>
+	
+	<!-- rqt_console -->
+	<node name="rqt_console" pkg="rqt_console" type="rqt_console"/>
+
+	<!-- Required nodes...  -->
+	<node name="coordinator" pkg="au_uav_ros" type="coordinator"/>
+	<node name="simulator" pkg="au_uav_ros" type="simulator"/>
+</launch>
