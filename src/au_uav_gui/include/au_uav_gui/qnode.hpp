@@ -9,8 +9,8 @@
  ** Ifdefs
  *****************************************************************************/
 
-#ifndef au_uav_gui_QNODE_HPP_
-#define au_uav_gui_QNODE_HPP_
+#ifndef AU_UAV_GUI_QNODE_HPP_
+#define AU_UAV_GUI_QNODE_HPP_
 
 /*****************************************************************************
  ** Includes
@@ -19,7 +19,7 @@
 #include <ros/ros.h>
 #include <QThread>
 #include <QStringListModel>
-#include "au_uav_gui/TelemetryUpdate.h"
+#include "au_uav_gui/Telemetry.h"
 
 /*****************************************************************************
  ** Namespaces
@@ -39,7 +39,7 @@ public:
     bool init();
     void run();
     void telemetryCallback(
-        const au_uav_gui::TelemetryUpdate::ConstPtr& msg);
+        const au_uav_gui::Telemetry::ConstPtr& msg);
     QString getPackagePath();
 
 signals:
@@ -59,6 +59,7 @@ private:
     int init_argc;
     char** init_argv;
     ros::Publisher chatter_publisher;
+    ros::Publisher shutdown_pub;
     ros::Subscriber telem_sub;
     ros::ServiceClient sendFileNameClient;
 };

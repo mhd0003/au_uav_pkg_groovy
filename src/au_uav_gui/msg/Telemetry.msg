@@ -7,6 +7,7 @@ float64 destLatitude
 float64 destLongitude
 float64 destAltitude
 float64 groundSpeed
+float64 airSpeed
 float64 targetBearing
 int64 currentWaypointIndex
 float64 distanceToDestination

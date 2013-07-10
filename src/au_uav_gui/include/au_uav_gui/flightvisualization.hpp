@@ -11,7 +11,6 @@
 #include <QWidget>
 #include <QTimer>
 #include <QMap>
-#include "au_uav_gui/TelemetryUpdate.h"
 #include <QMenu>
 #include <QListWidget>
 
