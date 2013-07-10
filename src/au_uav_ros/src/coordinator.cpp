@@ -262,11 +262,6 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 				Command cmd;
 				cmd.planeID = id;
 				cmd.sim = true;
-				// if (avoidanceWps[i] == INVALID_WP) {
-				// 	cmd.commandID = COMMAND_NORMAL_WP;
-				// } else {
-				// 	cmd.commandID = COMMAND_AVOID_WP
-				// }
 				cmd.commandID = COMMAND_AVOID_WP;
 				cmd.latitude = avoidanceWps[i].latitude;
 				cmd.longitude = avoidanceWps[i].longitude;
