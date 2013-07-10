@@ -65,7 +65,7 @@ function initialize() {
     var myOptions = {
         center: new google.maps.LatLng(32.606008, -85.487423),
         zoom: 17,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        mapTypeId: google.maps.MapTypeId.HYBRID,
         panControl: true,
         streetViewControl: false,
         styles: [
@@ -225,12 +225,9 @@ function updateMarker(planeID, lat, long, iconIndex) {
     }
 }
 
-function extendBounds(lat, long, planeID) {
+function extendBounds(lat, long) {
     var newLoc = new google.maps.LatLng(lat, long);
     bounds.extend(newLoc);
-    if(planeID >= 0) {
-        bounds.extend(wayPoints[planeID].getCenter());
-    }
 }
 
 function clearBounds() {

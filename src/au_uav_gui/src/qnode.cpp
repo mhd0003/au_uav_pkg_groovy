@@ -13,7 +13,7 @@
 #include <std_msgs/String.h>
 #include <QDebug>
 #include "au_uav_gui/qnode.hpp"
-#include "au_uav_gui/TelemetryUpdate.h"
+#include "au_uav_gui/Telemetry.h"
 #include "au_uav_gui/SendFilePath.h"
 #include <QFileDialog>
 #include <QMessageBox>
@@ -28,6 +28,9 @@ QNode::QNode(int argc, char ** argv) :
 QNode::~QNode()
 {
     if (ros::isStarted()) {
+	std_msgs::String msg;
+	msg.data = "bro";
+	shutdown_pub.publish(msg);
         ros::shutdown();    // explicitly needed since we use ros::start();
         ros::waitForShutdown();
     }
@@ -35,7 +38,7 @@ QNode::~QNode()
 }
 
 void QNode::telemetryCallback(
-    const au_uav_gui::TelemetryUpdate::ConstPtr & msg)
+    const au_uav_gui::Telemetry::ConstPtr & msg)
 {
     long double longitude = msg->currentLongitude;
     long double latitude = msg->currentLatitude;
@@ -68,7 +71,7 @@ void QNode::sendFilePath()
                        path, COURSE_FILE_TYPE);
     srv.request.filename = filename.toStdString().c_str();
     if (sendFileNameClient.call(srv)) {
-        emit filePathSent();
+        //emit filePathSent();
         return;
     } else {
         QMessageBox::warning(NO_PARENT, WARNING_TITLE, NO_ROS_NODE_WARNING,
@@ -96,6 +99,7 @@ bool QNode::init()
     sendFileNameClient = n.serviceClient < au_uav_gui::SendFilePath
                          > (SEND_FILE_SRV_NAME.toStdString());
 
+    shutdown_pub = n.advertise<std_msgs::String>("master_shutdown", 1000);
     start();
 
     return true;

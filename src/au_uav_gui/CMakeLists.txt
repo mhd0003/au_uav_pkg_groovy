@@ -20,7 +20,7 @@ find_package(GLIB2 REQUIRED)
 find_package(GTHREAD2 REQUIRED)
 
 add_message_files(FILES
-  TelemetryUpdate.msg
+  Telemetry.msg
 )
 
 add_service_files(FILES
