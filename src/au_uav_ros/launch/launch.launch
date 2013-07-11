@@ -8,6 +8,9 @@
 	<arg name="sim_freq" default="0.2" />
 	<param name="runSimFreq" value="$(arg sim_freq)" type="double" />
 	
+	<arg name="a_star" default="true" />
+	<param name="runAStar" value="$(arg a_star)" type="bool" />	
+	
 	<!-- To run centralized, do: -->
 	<!-- roslaunch au_uav_ros launch.launch centralized:=true -->
 	<arg name="centralized" default="false" />

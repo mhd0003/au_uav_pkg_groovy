@@ -334,3 +334,10 @@ Command PlaneObject::getPriorityCommand(void) {
 	ret.commandHeader.stamp = ros::Time::now();
 	return ret;
 }
+
+std::vector<waypoint> PlaneObject::getNormalPath(void) {
+	std::vector<waypoint> allWaypoints;
+	allWaypoints.reserve(normalPath.size());
+	allWaypoints.insert(allWaypoints.begin(), normalPath.begin(), normalPath.end());
+	return allWaypoints;
+}

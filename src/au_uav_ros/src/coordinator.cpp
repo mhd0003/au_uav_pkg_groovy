@@ -13,8 +13,11 @@ void Coordinator::init(ros::NodeHandle _n) {
 }
 
 void Coordinator::setup(void) {
-	// Set centralized through launch file parameter
-	// Default to centralized
+	if (n.getParam("runAStar", a_star)) {
+		//a_star = $(arg a_star)
+	} else {
+		a_star = false;
+	}
 	if (n.getParam("runCentralized", centralized)) {
 		//centralized = $(arg centralized)
 	} else {
@@ -182,7 +185,26 @@ bool Coordinator::remove_plane(RemovePlane::Request &req, RemovePlane::Response 
 void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 	std::vector<waypoint> avoidanceWps;
 	Command cmd;
-	if (planes.find(msg.planeID) != planes.end()) { /*TODO Handle ID duplicates-- map doesnt allow key duplicates */
+	if (a_star) {
+		std::map<int, PlaneObject> allPlanes;
+		allPlanes.insert(planes.begin(), planes.end());
+		allPlanes.insert(simPlanes.begin(), simPlanes.end());
+
+		if (allPlanes.find(msg.planeID) == allPlanes.end()) {
+			resolvePlaneID(msg);
+			return;
+		}
+
+		typedef std::vector<waypoint> waypointVector;
+		std::map<int, waypointVector> allPlanesWaypoints;
+
+		std::map<int,PlaneObject>::iterator it;
+		for (it = allPlanes.begin(); it != allPlanes.end(); ++it) {
+			allPlanesWaypoints[it->first] = it->second.getNormalPath();
+		}
+
+
+	} else if (planes.find(msg.planeID) != planes.end()) { /*TODO Handle ID duplicates-- map doesnt allow key duplicates */
 		bool b = planes[msg.planeID].update(msg, cmd);	/* so use telem or something else to check for dup planes */
 		if (b) {
 			cmd.sim = false;

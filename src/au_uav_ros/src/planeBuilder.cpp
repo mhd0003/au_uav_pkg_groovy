@@ -35,6 +35,8 @@ bool PlaneBuilder::buildCourse(std::string filename, Coordinator &c, std::map<in
 	if(fp != NULL)
 	{
 		char buffer[256];
+
+		// md
 		enum { SIMULATED, REAL };
 
 		std::map<int, bool> isFirstPoint;
@@ -51,6 +53,8 @@ bool PlaneBuilder::buildCourse(std::string filename, Coordinator &c, std::map<in
 				int planeID = -1;
 				struct waypoint tempWP;
 				int normal;
+
+				// md
 				int type;
 				//tempWP.latitude = tempWP.longitude = tempWP.altitude = -1000;
 
@@ -68,6 +72,9 @@ bool PlaneBuilder::buildCourse(std::string filename, Coordinator &c, std::map<in
 				//that this plane ID has been referenced so it's true
 				if(isFirstPoint.find(planeID) == isFirstPoint.end())
 				{
+					// md
+					// Logic changed here.
+					// If 'type' was not read from course file, default to simulated plane object.
 					if (type == REAL) { 
 						isFirstPoint[planeID] = true;
 						if(planeID == -1)

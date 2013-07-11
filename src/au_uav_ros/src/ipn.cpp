@@ -175,7 +175,7 @@ ipn::threatInfo ipn::getThreatInfo(SimPlaneObject &thisPlane, PlaneObject &other
 			double separationDistance, t_go, ZEM;
 /* Return pointer to threat with greatest danger of collision */
 /* Returns NULL if none of the threats need avoidance */
-ipn::threatInfo* ipn::findGreatestThreat(std::vector<ipn::threatInfo> &allThreats) {
+ipn::threatInfo* ipn::findGreatestThreat(std::vector<threatInfo> &allThreats) {
 	if (IPN_PRINT_DEBUG_1) {
 		ROS_INFO("Going through threats...");
 	}
