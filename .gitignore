@@ -12,6 +12,5 @@
 *.la
 *.a
 
-CMakeLists.txt
 *~
 build
