@@ -2,9 +2,9 @@
 using namespace au_uav_ros;
 
 // Print greatest threat
-#define IPN_PRINT_DEBUG_0 true
+#define IPN_PRINT_DEBUG_0 false
 // Print each threat's info
-#define IPN_PRINT_DEBUG_1 true
+#define IPN_PRINT_DEBUG_1 false
 // Print each threat's info as ripna.cpp would calculate it
 #define IPN_PRINT_RIPNA_1 false
 // Print turning info
@@ -40,8 +40,8 @@ bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> 
 	}
 
 	/* Set threshold values for this plane's speed */
-	SEPARATION_THRESHOLD = thisPlane.getSpeed() * 10.0;
-	ZEM_THRESHOLD = thisPlane.getSpeed() * 3.5;
+	SEPARATION_THRESHOLD = thisPlane.getSpeed() * 10.0 / 20;
+	ZEM_THRESHOLD = thisPlane.getSpeed() * 3.5 / 20;
 
 	std::vector<threatInfo> allThreats;
 	allThreats.resize(allPlanes.size());

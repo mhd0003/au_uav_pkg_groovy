@@ -33,6 +33,7 @@ namespace au_uav_ros {
 		//simulator internals
 		ros::NodeHandle n;
 		ros::WallTimer simulateTimer;
+		double simSpeed;
 		std::map<int, au_uav_ros::SimPlaneObject> simPlanes;
 		bool centralized;
 	public:

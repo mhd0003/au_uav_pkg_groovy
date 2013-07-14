@@ -2,11 +2,14 @@
 <!-- Defaults to decentralized, no XBeeIO, but with GUI -->
 
 <launch>
-	<arg name="sim_speed" default="5.0" />
+	<arg name="sim_speed" default="2.0" />
 	<param name="runSimSpeed" value="$(arg sim_speed)" type="double" />
 	
-	<arg name="sim_freq" default="0.2" />
+	<arg name="sim_freq" default="0.5" />
 	<param name="runSimFreq" value="$(arg sim_freq)" type="double" />
+	
+	<arg name="planPath" default="true" />
+	<param name="runPathPlanner" value="$(arg planPath)" type="bool" />
 	
 	<!-- To run centralized, do: -->
 	<!-- roslaunch au_uav_ros launch.launch centralized:=true -->
@@ -43,3 +46,4 @@
 	<node name="coordinator" pkg="au_uav_ros" type="coordinator"/>
 	<node name="simulator" pkg="au_uav_ros" type="simulator"/>
 </launch>
+

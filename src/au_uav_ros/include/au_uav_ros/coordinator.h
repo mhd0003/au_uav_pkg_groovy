@@ -1,6 +1,7 @@
 #ifndef _COORDINATOR_
 #define _COORDINATOR_
 
+#include <bitset>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,7 @@
 
 //service includes
 #include "au_uav_ros/AddPlane.h"
+#include "au_uav_ros/Centralize.h"
 #include "au_uav_ros/LoadCourse.h"
 #include "au_uav_ros/RemovePlane.h"
 #include "au_uav_ros/RemoveWp.h"
@@ -71,7 +73,14 @@ namespace au_uav_ros {
 		* Service Name: "remove_plane"
 		* see RemovePlane.srv for paramters	
 		*/
-		ros::ServiceServer removePlaneService;
+		ros::ServiceServer removePlaneService; 
+	
+		/*
+		* Call this service to set/clear centralize flag
+		* Service Name: "centralize"
+		* see Centralize.srv for paramters	
+		*/
+		ros::ServiceServer centralizeService;
 
 		//Service and topics to simulator
 		ros::ServiceClient manageSimPlanesClient;
@@ -87,7 +96,15 @@ namespace au_uav_ros {
 		std::map<int, au_uav_ros::PlaneObject> planes;
 		std::map<int, au_uav_ros::SimPlaneObject> simPlanes;
 		std::list<int> newPlanes; //ids of real planes that have been loaded into system but have not been set in the air
-		/* TODO decentralized flag */bool centralized;
+		bool centralized;
+		bool planPath;
+
+		// used for A*
+		std::bitset<255> planeUpdated;
+		std::bitset<255> planeAvoiding;
+		// int planeCount;
+		// int simPlaneCount;
+		bool needPlan;
 		
 	public:
 		void run(void);
@@ -99,6 +116,7 @@ namespace au_uav_ros {
 		bool load_course(LoadCourse::Request &req, LoadCourse::Response &res);
 		bool remove_wp(RemoveWp::Request &req, RemoveWp::Response &res);
 		bool remove_plane(RemovePlane::Request &req, RemovePlane::Response &res);
+		bool centralize(Centralize::Request &req, Centralize::Response &res);
 		void telemetry(const au_uav_ros::Telemetry &msg);
 		void resolvePlaneID(const au_uav_ros::Telemetry &msg);
 	}; 
