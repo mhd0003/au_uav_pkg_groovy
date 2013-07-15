@@ -20,18 +20,19 @@ void Simulator::setup(void) {
 	telemetryTopic = n.advertise<au_uav_ros::Telemetry>("telemetry", 1000);
 	commandTopic = n.subscribe("commands", 1000, &Simulator::commands, this);
 
-	double temp;
+	double freq;
 	// Set initial simulation frequency through launch file parameter
 	// Default to centralized
-	if (n.getParam("runSimFreq", temp)) {
-		simulateTimer = n.createWallTimer(ros::WallDuration(temp), &Simulator::simulate, this);
+	if (n.getParam("runSimFreq", freq)) {
+	double period = 1.0 / freq;
+		simulateTimer = n.createWallTimer(ros::WallDuration(period), &Simulator::simulate, this);
 	} else {
 		simulateTimer = n.createWallTimer(ros::WallDuration(1.0), &Simulator::simulate, this);
 	}
-	// if (n.getParam("runSimSpeed", temp)) {
-	// 	simulateTimer = n.createWallTimer(ros::WallDuration(temp), &Simulator::simulate, this);
+	// if (n.getParam("runSimSpeed", simSpeed)) {
+	// 		//
 	// } else {
-	// 	simulateTimer = n.createWallTimer(ros::WallDuration(1.0), &Simulator::simulate, this);
+	// 		simSpeed = 1.0;
 	
 	// Set de/centralized through launch file parameter
 	// Default to centralized
@@ -75,14 +76,19 @@ bool Simulator::manage_simplanes(au_uav_ros::SimPlane::Request &req, au_uav_ros:
 				wp.altitude = req.altitudes.front();
 				simPlanes[req.planeID].addNormalWp(wp);
 			} else {
-				//TODO simPlanes[req.planeID].removeWp();
+				waypoint wp;
+				wp.latitude = req.latitudes.front();
+				wp.longitude = req.longitudes.front();
+				wp.altitude = req.altitudes.front();
+				simPlanes[req.planeID].removeNormalWp(wp);
 			}
 		}
 	} else {//new plane id so add it to map
 		simPlanes[req.planeID] = SimPlaneObject();
 		simPlanes[req.planeID].setID(req.planeID);
 		simPlanes[req.planeID].setCurrentLoc(req.latitudes[0], req.longitudes[0], req.altitudes[0]);
-		for (int i = 1; i < req.size; i++) {
+		simPlanes[req.planeID].setSimSpeed(simSpeed);
+		for (int i = 0; i < req.size; i++) {
 			waypoint wp;
 			wp.latitude = req.latitudes[i];
 			wp.longitude = req.longitudes[i];

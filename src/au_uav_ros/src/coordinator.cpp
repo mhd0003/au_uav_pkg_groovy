@@ -13,8 +13,12 @@ void Coordinator::init(ros::NodeHandle _n) {
 }
 
 void Coordinator::setup(void) {
-	// Set centralized through launch file parameter
-	// Default to centralized
+	if (n.getParam("runPathPlanner", planPath)) {
+		//planPath = $(arg planPath)
+	} else {
+		planPath = false;
+	}
+
 	if (n.getParam("runCentralized", centralized)) {
 		//centralized = $(arg centralized)
 	} else {
@@ -26,7 +30,7 @@ void Coordinator::setup(void) {
 			ROS_INFO("Running centralized collision avoidance!");
 		}
 		else {
-			ROS_INFO("Running DEcentralized collision avoidance!");
+			ROS_INFO("Running decentralized collision avoidance!");
 		}
 	}
 	
@@ -36,6 +40,8 @@ void Coordinator::setup(void) {
 	loadCourseService =n.advertiseService("load_course", &Coordinator::load_course, this);
 	removeWpService = n.advertiseService("remove_wp", &Coordinator::remove_wp, this);
 	removePlaneService = n.advertiseService("remove_plane", &Coordinator::remove_plane, this);
+
+	centralizeService = n.advertiseService("centralize", &Coordinator::centralize, this);
 
 	manageSimPlanesClient = n.serviceClient<au_uav_ros::SimPlane>("manage_simplanes");
 
@@ -81,24 +87,28 @@ bool Coordinator::add_plane(AddPlane::Request &req, AddPlane::Response &res) {
 }
 
 bool Coordinator::set_wp(SetWp::Request &req, SetWp::Response &res) {
-	/* TODO guard input */
-	struct waypoint wp;
-	wp.altitude = req.altitude;
-	wp.latitude = req.latitude;
-	wp.longitude = req.longitude;
-	if (req.sim) {
-		simPlanes[req.planeID].addNormalWp(wp);
-		SimPlane s;
-		s.request.clear = false;
-		s.request.add = true;
-		s.request.size = 1;
-		s.request.planeID = req.planeID;
-		s.request.latitudes.push_back(req.latitude);
-		s.request.longitudes.push_back(req.longitude);
-		s.request.altitudes.push_back(req.altitude);
-		manageSimPlanesClient.call(s);
+	if (planes.find(req.planeID) != planes.end() || simPlanes.find(req.planeID) != simPlanes.end()) {
+		res.error = "None";
+		struct waypoint wp;
+		wp.altitude = req.altitude;
+		wp.latitude = req.latitude;
+		wp.longitude = req.longitude;
+		if (req.sim) {
+			simPlanes[req.planeID].addNormalWp(wp);
+			SimPlane s;
+			s.request.clear = false;
+			s.request.add = true;
+			s.request.size = 1;
+			s.request.planeID = req.planeID;
+			s.request.latitudes.push_back(req.latitude);
+			s.request.longitudes.push_back(req.longitude);
+			s.request.altitudes.push_back(req.altitude);
+			manageSimPlanesClient.call(s);
+		} else {
+			planes[req.planeID].addNormalWp(wp);
+		}
 	} else {
-		planes[req.planeID].addNormalWp(wp);
+		res.error = "Plane ID not found";
 	}
 	return true;
 }
@@ -142,41 +152,58 @@ bool Coordinator::load_course(LoadCourse::Request &req, LoadCourse::Response &re
 }
 
 bool Coordinator::remove_wp(RemoveWp::Request &req, RemoveWp::Response &res) {
-	/* TODO guard input */
-	struct waypoint wp;
-	wp.altitude = req.altitude;
-	wp.latitude = req.latitude;
-	wp.longitude = req.longitude;
-	if (req.sim) {
-		SimPlane s;
-		s.request.clear = false;
-		s.request.planeID = req.planeID;
-		s.request.add = false;
-		s.request.latitudes.push_back(req.latitude);
-		s.request.longitudes.push_back(req.longitude);
-		s.request.altitudes.push_back(req.altitude);
-		s.request.size = 1;
-		manageSimPlanesClient.call(s);
-		simPlanes[req.planeID].removeNormalWp(wp);
+	if (planes.find(req.planeID) != planes.end() || simPlanes.find(req.planeID) != simPlanes.end()) {
+		res.error = "None";
+		struct waypoint wp;
+		wp.altitude = req.altitude;
+		wp.latitude = req.latitude;
+		wp.longitude = req.longitude;
+		if (req.sim) {
+			SimPlane s;
+			s.request.clear = false;
+			s.request.planeID = req.planeID;
+			s.request.add = false;
+			s.request.latitudes.push_back(req.latitude);
+			s.request.longitudes.push_back(req.longitude);
+			s.request.altitudes.push_back(req.altitude);
+			s.request.size = 1;
+			manageSimPlanesClient.call(s);
+			simPlanes[req.planeID].removeNormalWp(wp);
+		} else {
+			planes[req.planeID].removeNormalWp(wp);
+		}
 	} else {
-		planes[req.planeID].removeNormalWp(wp);
+		res.error = "Plane ID not found";
 	}
 	return true;
 }
 
 bool Coordinator::remove_plane(RemovePlane::Request &req, RemovePlane::Response &res) {
-	/* TODO guard input */
-	if (req.sim) {
-		SimPlane s;
-		s.request.clear = false;
-		s.request.planeID = req.planeID;
-		s.request.size = 0;
-		manageSimPlanesClient.call(s);
-		simPlanes.erase(req.planeID);
+	if (planes.find(req.planeID) != planes.end() || simPlanes.find(req.planeID) != simPlanes.end()) {
+		res.error = "None";
+		if (req.sim) {
+			SimPlane s;
+			s.request.clear = false;
+			s.request.planeID = req.planeID;
+			s.request.size = 0;
+			manageSimPlanesClient.call(s);
+			simPlanes.erase(req.planeID);
+		} else {
+			planes.erase(req.planeID);
+		}
 	} else {
-		planes.erase(req.planeID);
+		res.error = "Plane ID not found";
 	}
 	return true;
+}
+
+bool Coordinator::centralize(Centralize::Request &req, Centralize::Response &res) {
+	if (req.centralize) {
+		centralized = true;
+	} else {
+		centralized = false;
+	}
+	res.error = "None";
 }
 
 void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
@@ -249,25 +276,17 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 			// md
 			// Decentralized collision avoidance here
 
-			// md
-			// TODO: Two ways to do this
-			// (1) Planes run CA only right after they push out an update.
-			// (2) Planes run CA every time an update is received.
-			ca.distrubuted_avoid(msg.planeID, planes, simPlanes, avoidanceWps);
-			int id;
-			for (unsigned int i = 0; i < avoidanceWps.size(); i++) {
-				id = avoidanceWps[i].planeID;
-				simPlanes[id].addAvoidanceWp(avoidanceWps[i]);
+			waypoint avoidanceWP;
+			ca.distrubuted_avoid(msg.planeID, planes, simPlanes, avoidanceWP);
 
-				Command cmd;
-				cmd.planeID = id;
-				cmd.sim = true;
-				cmd.commandID = COMMAND_AVOID_WP;
-				cmd.latitude = avoidanceWps[i].latitude;
-				cmd.longitude = avoidanceWps[i].longitude;
-				cmd.altitude = avoidanceWps[i].altitude;
-				commandTopic.publish(cmd);
-			}
+			Command newCmd;
+			newCmd.planeID = msg.planeID;
+			newCmd.sim = true;
+			newCmd.commandID = COMMAND_AVOID_WP;
+			newCmd.latitude = avoidanceWP.latitude;
+			newCmd.longitude = avoidanceWP.longitude;
+			newCmd.altitude = avoidanceWP.altitude;
+			commandTopic.publish(newCmd);
 		}
 	} else {
 		resolvePlaneID(msg);
@@ -284,6 +303,18 @@ void Coordinator::resolvePlaneID(const Telemetry &msg) {
 		cmd.commandHeader.stamp = ros::Time::now();
 		commandTopic.publish(cmd);
 		newPlanes.pop_front();
+		
+		//Send new plane its first wp
+		Command firstWp;
+		firstWp.commandID = COMMAND_NORMAL_WP;
+		firstWp.planeID = cmd.param;
+		firstWp.sim = false;
+		ROS_ERROR("lat: %lf|long: %lf|alt: %lf", planes[cmd.param].getDestination().latitude, planes[cmd.param].getDestination().longitude, planes[cmd.param].getDestination().altitude);
+		firstWp.latitude = planes[cmd.param].getDestination().latitude;
+		firstWp.longitude = planes[cmd.param].getDestination().longitude;
+		firstWp.altitude = planes[cmd.param].getDestination().altitude;
+		firstWp.commandHeader.stamp = ros::Time::now();
+		commandTopic.publish(firstWp);
 	} else {
 		waypoint dest;
 		dest.altitude = msg.destAltitude;

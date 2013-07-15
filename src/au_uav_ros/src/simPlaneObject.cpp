@@ -8,14 +8,12 @@ SimPlaneObject::SimPlaneObject(void) : PlaneObject() {
 }
 
 SimPlaneObject::SimPlaneObject(struct waypoint wp) : PlaneObject(wp) {
-	/* TODO Why does wp index need to be -1 on start vs 0 */
-	//this->speed = MPH_SPEED;
 	this->speed = MPS_SPEED;
 	simSpeed = 1;
 }
 
 void SimPlaneObject::setSimSpeed(double _simSpeed) {
-	simSpeed = _simSpeed; //TODO guard input if negatives don't work
+	simSpeed = _simSpeed;
 }
 
 double SimPlaneObject::getSimSpeed(void) const {

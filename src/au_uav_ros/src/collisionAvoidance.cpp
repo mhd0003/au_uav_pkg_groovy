@@ -26,7 +26,7 @@ void CollisionAvoidance::avoid(int id, std::map<int, PlaneObject> planes, std::m
 	wps.push_back(newWaypoint); */
 }
 
-void CollisionAvoidance::distrubuted_avoid(int id, std::map<int, PlaneObject> planes, std::map<int, SimPlaneObject> simPlanes, std::vector<waypoint> &wps) {
+void CollisionAvoidance::distrubuted_avoid(int id, std::map<int, PlaneObject> planes, std::map<int, SimPlaneObject> simPlanes, waypoint &avoidanceWP) {
 	// This should never happen since the function is only called
 	// after the id is confirmed. But just in case..
 	if (simPlanes.find(id) == simPlanes.end()) {
@@ -37,7 +37,6 @@ void CollisionAvoidance::distrubuted_avoid(int id, std::map<int, PlaneObject> pl
 	allPlanes.insert(planes.begin(), planes.end());
 	allPlanes.insert(simPlanes.begin(), simPlanes.end());
 
-	waypoint avoidanceWP;
 	// std::map<int, SimPlaneObject>::iterator it;
 	// for (it = simPlanes.begin(); it != simPlanes.end(); ++it) {
 	// 	// Don't run CA on the plane that just pushed the update?
@@ -55,8 +54,5 @@ void CollisionAvoidance::distrubuted_avoid(int id, std::map<int, PlaneObject> pl
 
 	if (ipn::checkForThreats(simPlanes[id], allPlanes, avoidanceWP)) {
 		avoidanceWP.planeID = id;
-		wps.push_back(avoidanceWP);
 	}
-	
-	
 }
