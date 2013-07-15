@@ -23,7 +23,7 @@ namespace au_uav_ros {
 		void distrubuted_avoid(int id, 
 				std::map<int, PlaneObject> planes, 
 				std::map<int, SimPlaneObject> simPlanes,
-				waypoint &wps);
+				waypoint &avoidanceWP);
 		void astar_planPath(std::map<int, PlaneObject> planes,
 						std::map<int, SimPlaneObject> simPlanes,
 						std::map<int, std::vector<waypoint> > &allPlanesPath);

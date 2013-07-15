@@ -56,7 +56,6 @@ void CollisionAvoidance::distrubuted_avoid(int id, std::map<int, PlaneObject> pl
 	if (ipn::checkForThreats(simPlanes[id], allPlanes, avoidanceWP)) {
 		avoidanceWP.planeID = id;
 	}
-	
 }
 
 

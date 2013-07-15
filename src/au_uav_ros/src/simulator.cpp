@@ -20,11 +20,12 @@ void Simulator::setup(void) {
 	telemetryTopic = n.advertise<au_uav_ros::Telemetry>("telemetry", 1000);
 	commandTopic = n.subscribe("commands", 1000, &Simulator::commands, this);
 
-	double temp;
+	double freq;
 	// Set initial simulation frequency through launch file parameter
 	// Default to centralized
-	if (n.getParam("runSimFreq", temp)) {
-		simulateTimer = n.createWallTimer(ros::WallDuration(temp), &Simulator::simulate, this);
+	if (n.getParam("runSimFreq", freq)) {
+	// double period = 1.0 / freq;
+		simulateTimer = n.createWallTimer(ros::WallDuration(freq), &Simulator::simulate, this);
 	} else {
 		simulateTimer = n.createWallTimer(ros::WallDuration(1.0), &Simulator::simulate, this);
 	}
