@@ -87,8 +87,7 @@ namespace au_uav_ros {
 		std::map<int, au_uav_ros::PlaneObject> planes;
 		std::map<int, au_uav_ros::SimPlaneObject> simPlanes;
 		std::list<int> newPlanes; //ids of real planes that have been loaded into system but have not been set in the air
-		bool centralized;
-		bool a_star;
+		/* TODO decentralized flag */bool centralized;
 		
 	public:
 		void run(void);
