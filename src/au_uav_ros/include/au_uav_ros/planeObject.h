@@ -74,7 +74,7 @@ namespace au_uav_ros {
             au_uav_ros::Command getPriorityCommand(void);
 
 
-            /* Used for A* - fills vector with all normal waypoints */
+            /* Used for A* - fills vector with all normal waypoints, and avoidWp at the front */
             std::vector<waypoint> getNormalPath(void);
 
         protected:

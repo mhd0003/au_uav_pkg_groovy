@@ -102,9 +102,6 @@ namespace au_uav_ros {
 		// used for A*
 		std::bitset<255> planeUpdated;
 		std::bitset<255> planeAvoiding;
-		// int planeCount;
-		// int simPlaneCount;
-		bool needPlan;
 		
 	public:
 		void run(void);

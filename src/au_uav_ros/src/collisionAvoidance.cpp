@@ -64,26 +64,6 @@ void CollisionAvoidance::distrubuted_avoid(int id, std::map<int, PlaneObject> pl
 //////                       Begin A*                       /////
 /////////////////////////////////////////////////////////////////
 
-vector<au_uav_ros::waypoint> generateCombinedWaypoints(vector<au_uav_ros::waypoint> *realWaypoints, vector<map_tools::waypointPath> *avoidPaths) {
-	int avoidanceIndex = 0;
-	vector<au_uav_ros::waypoint> combined;
-	//TODO fix this using gridVals, this only works because gridVals is global
-	for (int i = 0; i < realWaypoints->size(); i++) {
-		// i-1 is for if the first avoidance path is from the plane's start position to the first waypoint
-		if (avoidanceIndex < avoidPaths->size() && i-1 == (*avoidPaths)[avoidanceIndex].startWaypointIndex) {
-			for (int j = 0; j < (*avoidPaths)[avoidanceIndex].pathWaypoints.size(); j++) {
-				combined.push_back((*avoidPaths)[avoidanceIndex].pathWaypoints[j]);
-			}
-			avoidanceIndex++;
-		}
-		// add next waypoint
-		combined.push_back((*realWaypoints)[i]);
-	}
-	return combined;
-}
-
-
-
 void CollisionAvoidance::astar_planPath(std::map<int, PlaneObject> planes,
 										std::map<int, SimPlaneObject> simPlanes,
 										std::map<int, std::vector<waypoint> > &allPlanesPath) {
@@ -104,15 +84,8 @@ void CollisionAvoidance::astar_planPath(std::map<int, PlaneObject> planes,
 	// Get an avoidance plan for each plane. (this calls function in prar)
 	allPlanesWaypointPath = getAStarPath(&allPlanes, &allPlanesWaypoints);
 
-	// Combine the avoidance plan with the current waypoints.
+	// Convert between map_tools::waypointPath and std::vector<waypoint>
 	for (itt = allPlanesWaypointPath.begin(); itt != allPlanesWaypointPath.end(); itt++) {
-
 		allPlanesPath[itt->first] = allPlanesWaypointPath[itt->first].pathWaypoints;
-
-		int pathSize = allPlanesPath[itt->first].size();
-		ROS_ERROR("CA: Planned path for id #%d should have %d points", itt->first, pathSize);
-
-		// Coordinator will handle setting the waypoints for everyone.
-		// It will call the service for Simulator to do the same.
 	}
 }

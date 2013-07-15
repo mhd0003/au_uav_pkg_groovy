@@ -2,7 +2,9 @@
 using namespace au_uav_ros;
 
 #define COORD_PRINT_DEBUG true
-
+#define COORD_PRINT_DEBUG_ASTAR_0 true
+#define COORD_PRINT_DEBUG_ASTAR_1 true
+#define COORD_PRINT_DEBUG_ASTAR_2 true
 void Coordinator::run(void) {
 	ros::spin();
 }
@@ -30,7 +32,7 @@ void Coordinator::setup(void) {
 			ROS_INFO("Running centralized collision avoidance!");
 		}
 		else {
-			ROS_INFO("Running DEcentralized collision avoidance!");
+			ROS_INFO("Running decentralized collision avoidance!");
 		}
 	}
 	
@@ -209,47 +211,6 @@ bool Coordinator::centralize(Centralize::Request &req, Centralize::Response &res
 void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 	std::vector<waypoint> avoidanceWps;
 	Command cmd;
-	// // Check if the path planner should be run
-	// // For now, running it will cause all other (reactive) CA to stop
-	// if (planPath) {
-	// 	// Check if this update is from a plane we know about
-	// 	if (planes.find(msg.planeID) == planes.end() && simPlanes.find(msg.planeID) == simPlanes.end() ) {
-	// 		resolvePlaneID(msg);
-	// 		return;
-	// 	}
-
-	// 	// If the size of the map changed, run the path planner.
-	// 	if (planes.size() != planeCount || simPlanes.size() != simPlaneCount) {
-	// 		needPlan = true;
-	// 		planeCount = planes.size();
-	// 		simPlaneCount = simPlanes.size();
-	// 	}
-
-	// 	if (needPlan) {
-	// 		std::map<int, std::vector<waypoint> > astar_path;
-	// 		ca.astar_avoid(planes, simPlanes, astar_path);
-
-	// 		std::map<int, waypointVector>::iterator it;
-	// 		for (it = astar_path.begin(); it != astar_path.end(); it++) {
-
-	// 			if (planes.find(it->first) != planes.end()) {
-	// 				// Path is for a real plane
-	// 				// TODO: load wps into queue
-
-
-	// 			} else if (simPlanes.find(it->first) != simPlanes.end()) {
-	// 				// Path is for a simulated plane
-	// 				// TODO: load wps into queue
-	// 				// TODO: call service in simulator
-	// 			}
-	// 		}
-
-	// 		needPlan = false;
-	// 	}
-
-	// 	return;
-	// }
-
 	if (planes.find(msg.planeID) != planes.end()) { /*TODO Handle ID duplicates-- map doesnt allow key duplicates */
 		bool b = planes[msg.planeID].update(msg, cmd);	/* so use telem or something else to check for dup planes */
 		if (b) {
@@ -286,9 +247,8 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 	} else if (simPlanes.find(msg.planeID) != simPlanes.end()) {
 		bool b = simPlanes[msg.planeID].update(msg, cmd);
 		if (b) {
-			// This is where normal wps are sent but sims already know all their normal wps
-			// Update: sim planes do not know their planned path. Those are set individually by
-			// Coordinator.
+			// Update: sim planes do not know their A* planned path. Those are set individually by
+			// Coordinator. A* waypoints are set one at a time as avoidance wps.
 			cmd.sim = true;
 			commandTopic.publish(cmd);
 		}
@@ -322,7 +282,8 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 
 			waypoint avoidanceWP;
 			ca.distrubuted_avoid(msg.planeID, planes, simPlanes, avoidanceWP);
-			if (avoidanceWP.planeID == -1) {
+
+			if (avoidanceWP == INVALID_WP) {
 				planeAvoiding.reset(msg.planeID);
 			} else {
 				planeAvoiding.set(msg.planeID);
@@ -344,49 +305,35 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 	}
 
 	// A* logic
+	// TODO: Only works for distributed, simulated planes at the moment.
 	if (planPath) {
-		int planesCount = planes.size();
+		// int planesCount = planes.size();
 		int simPlanesCount = simPlanes.size();
 		planeUpdated.set(msg.planeID);
 
 		// Check if all planes have been updated
-		if (planeUpdated.count() == (planesCount+simPlanesCount)) {
+		if (planeUpdated.count() == (simPlanesCount)) {
+			if (COORD_PRINT_DEBUG_ASTAR_0) {
+				ROS_INFO("All planes updated. Calling path planner...");
+			}
+
 			std::map<int, std::vector<waypoint> > allPlanesPath;
 			ca.astar_planPath(planes, simPlanes, allPlanesPath);
-			
-			// std::map<int, PlaneObject>::iterator it;
-			// for (it = planes.begin(); it != planes.end(); it++) {
-			// 	ROS_INFO("Plane id#%d is avoiding: %d", it->first, planeAvoiding.test(it->first));
 
-			// 	if (!planeAvoiding.test(it->first)) {
-			// 		it->second.setPlannedPath(allPlanesPath[it->first]);
-					
-			// 		std::vector<waypoint> path = allPlanesPath[it->first];
-			// 		ROS_ERROR("Path for plane id #%d has %d points", it->first, path.size());
-			// 	}
-			// }
-			// std::map<int, SimPlaneObject>::iterator itt;
-			// for (itt = simPlanes.begin(); itt != simPlanes.end(); itt++) {
-			// 	ROS_INFO("Plane id#%d is avoiding: %d", it->first, planeAvoiding.test(it->first));
-
-			// 	if (!planeAvoiding.test(itt->first)) {
-			// 		itt->second.setPlannedPath(allPlanesPath[itt->first]);
-
-			// 		std::vector<waypoint> path = allPlanesPath[itt->first];
-			// 		ROS_ERROR("Path for plane id #%d has %d points", itt->first, path.size());
-			// 	}
-			// }
-
-			typedef std::vector<waypoint> waypointVector;
-			std::map<int, waypointVector>::iterator it;
+			std::map<int, std::vector<waypoint> >::iterator it;
 			for (it = allPlanesPath.begin(); it != allPlanesPath.end(); it++) {
 				if (planes.find(it->first) != planes.end()) {
 					// TODO: real planes
 				} else if (simPlanes.find(it->first) != simPlanes.end()) {
+					if (COORD_PRINT_DEBUG_ASTAR_1) {
+						ROS_INFO("Planned path for #%d has %li waypoints.", it->first, allPlanesPath[it->first].size());
+						if (planeAvoiding.test(it->first)) {
+							ROS_WARN("Plane #%d is busy avoiding a threat.", it->first);
+						}
+					}
+					
 					if (!planeAvoiding.test(it->first)) {
 						simPlanes[it->first].setPlannedPath(allPlanesPath[it->first]);
-						std::vector<waypoint> path = allPlanesPath[it->first];
-						ROS_ERROR("Path for plane id #%d has %d points", it->first, path.size());
 					}
 				}
 			}

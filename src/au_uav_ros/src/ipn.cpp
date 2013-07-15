@@ -32,7 +32,6 @@ waypoint getWaypoint(coordinate _coordinate) {
 * (1) Get threat info for all planes
 * (2) Determine greatest threat (if any)
 * (3) Generate avoidance waypoint
-* //(4) Set waypoint as destination
 */
 bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> &allPlanes, waypoint &avoidanceWP) {
 	if (IPN_PRINT_DEBUG_0) {
@@ -40,8 +39,8 @@ bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> 
 	}
 
 	/* Set threshold values for this plane's speed */
-	SEPARATION_THRESHOLD = thisPlane.getSpeed() * 10.0 / 20;
-	ZEM_THRESHOLD = thisPlane.getSpeed() * 3.5 / 20;
+	SEPARATION_THRESHOLD = thisPlane.getSpeed() * 10.0 / MU;
+	ZEM_THRESHOLD = thisPlane.getSpeed() * 3.5 / MU;
 
 	std::vector<threatInfo> allThreats;
 	allThreats.resize(allPlanes.size());
@@ -67,9 +66,7 @@ bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> 
 
 		/* (3) Generate avoidance waypoint */
 		avoidanceWP = createAvoidanceWaypoint(thisPlane, *greatestThreat);
-
-		/* (4) Set waypoint as destination */
-		// setWaypoint(thisPlane, avoidanceWP);
+		avoidanceWP.planeID = thisPlane.getID();
 
 		return true;
 	}
