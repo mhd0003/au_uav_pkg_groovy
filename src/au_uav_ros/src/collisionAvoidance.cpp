@@ -8,18 +8,24 @@ void CollisionAvoidance::avoid(int id, std::map<int, PlaneObject> planes, std::m
 	allPlanes.insert(planes.begin(), planes.end());
 	allPlanes.insert(simPlanes.begin(), simPlanes.end());
 
-	waypointContainer bothNewWaypoints = findNewWaypoint(allPlanes[id], planes);
+	// md
+	// waypointContainer bothNewWaypoints = findNewWaypoint(allPlanes[id], planes);
+	waypointContainer bothNewWaypoints = findNewWaypoint(allPlanes[id], allPlanes);
 	waypoint newWaypoint = bothNewWaypoints.plane1WP;
 	
+	// md
+	// ID: -1000 means dubins path was taken... (plane not in danger)
+	if (bothNewWaypoints.plane2ID != -1000) {
+		newWaypoint.planeID = id;
+		wps.push_back(newWaypoint);
+	}
+
 	if (bothNewWaypoints.plane2ID >= 0) {
 		waypoint newWaypoint2 = bothNewWaypoints.plane2WP;
 		newWaypoint2.planeID = bothNewWaypoints.plane2ID;
 		wps.push_back(newWaypoint2);
-
-		newWaypoint.planeID = id;
-		wps.push_back(newWaypoint);
-		
-	} /* TODO THIS IS BROKE */
+	}
+	/* TODO THIS IS BROKE */
 	/* TODO if ((requestWaypointInfoSrv.response.longitude == newWaypoint.longitude) 
 		&& (requestWaypointInfoSrv.response.latitude == newWaypoint.latitude)) {return;} what does this do */
 	/**newWaypoint.planeID = id;

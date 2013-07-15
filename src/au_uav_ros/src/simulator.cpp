@@ -24,8 +24,8 @@ void Simulator::setup(void) {
 	// Set initial simulation frequency through launch file parameter
 	// Default to centralized
 	if (n.getParam("runSimFreq", freq)) {
-	double period = 1.0 / freq;
-		simulateTimer = n.createWallTimer(ros::WallDuration(period), &Simulator::simulate, this);
+	// double period = 1.0 / freq;
+		simulateTimer = n.createWallTimer(ros::WallDuration(freq), &Simulator::simulate, this);
 	} else {
 		simulateTimer = n.createWallTimer(ros::WallDuration(1.0), &Simulator::simulate, this);
 	}

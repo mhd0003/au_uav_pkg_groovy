@@ -2,9 +2,9 @@
 using namespace au_uav_ros;
 
 // Print greatest threat
-#define IPN_PRINT_DEBUG_0 true
+#define IPN_PRINT_DEBUG_0 false
 // Print each threat's info
-#define IPN_PRINT_DEBUG_1 true
+#define IPN_PRINT_DEBUG_1 false
 // Print each threat's info as ripna.cpp would calculate it
 #define IPN_PRINT_RIPNA_1 false
 // Print turning info
@@ -35,7 +35,7 @@ waypoint getWaypoint(coordinate _coordinate) {
 */
 bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> &allPlanes, waypoint &avoidanceWP) {
 	if (IPN_PRINT_DEBUG_0) {
-		ROS_INFO("Checking for threats to plane #%i...", thisPlane.getID());
+		// ROS_INFO("Checking for threats to plane #%i...", thisPlane.getID());
 	}
 
 	/* Set threshold values for this plane's speed */
@@ -53,15 +53,34 @@ bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> 
 
 	/* (2) Determine greatest threat */
 	threatInfo* greatestThreat = findGreatestThreat(allThreats);
+
 	if (greatestThreat == NULL) {
 		if (IPN_PRINT_DEBUG_0) {
 			ROS_INFO("Plane #%i - no greatest threat", thisPlane.getID());
 		}
+		if (IPN_PRINT_DEBUG_0) {
+			threatContainer tC = findGreatestThreat(thisPlane, allPlanes);
+			if (tC.planeID >= 0) {
+				ROS_ERROR("ripna disagrees. Greatest threat should be #%d", tC.planeID);
+				ROS_ERROR("for that plane, I had t_go %f and ZEM %f", allThreats[tC.planeID].t_go, allThreats[tC.planeID].ZEM);
+				ROS_ERROR("it had t_go %f and ZEM %f", tC.timeToGo, tC.ZEM);
+			}
+		}
+
 		return false;
 	} else {
 		if (IPN_PRINT_DEBUG_0) {
 			ROS_WARN("Plane #%i - greatest threat is #%i",
 				thisPlane.getID(), greatestThreat->threatPlane->getID());
+		}
+		if (IPN_PRINT_DEBUG_0) {
+			threatContainer tC = findGreatestThreat(thisPlane, allPlanes);
+			if (tC.planeID != greatestThreat->threatPlane->getID() && tC.planeID >= 0) {
+				ROS_ERROR("ripna disagrees. Greatest threat should be #%d", tC.planeID);
+				ROS_ERROR("for that plane, I had t_go %f and ZEM %f", allThreats[tC.planeID].t_go, allThreats[tC.planeID].ZEM);
+				ROS_ERROR("it had t_go %f and ZEM %f", tC.timeToGo, tC.ZEM);
+				ROS_ERROR("my greatest threat was #%d, with t_go %f and ZEM %f", greatestThreat->threatPlane->getID(), greatestThreat->t_go, greatestThreat->ZEM);
+			}
 		}
 
 		/* (3) Generate avoidance waypoint */
@@ -192,25 +211,32 @@ ipn::threatInfo* ipn::findGreatestThreat(std::vector<ipn::threatInfo> &allThreat
 			ROS_INFO("t_go threshold: %f, ZEM threshold: %f",T_GO_THRESHOLD, ZEM_THRESHOLD);
 		}
 
-		if (ZEM < 0 || t_go < 0 || ZEM > ZEM_THRESHOLD || t_go > T_GO_THRESHOLD) {
+		//if (ZEM < 0 || t_go < 0 || ZEM > ZEM_THRESHOLD || t_go > T_GO_THRESHOLD) {
+		if (ZEM < 0 || t_go < 0 || ZEM > ZEM_THRESHOLD) {
 			continue;
 		}
 
-		if (fabs( allThreats[i].separationV.getAngle() ) > 67.5) {
-			if (IPN_PRINT_DEBUG_1) {
-				ROS_WARN("Plane #%i - %f meters away, t_go = %f, ZEM = %f", 
-					allThreats[i].threatPlane->getID(), allThreats[i].separationDistance, t_go, ZEM);
-				ROS_WARN("t_go threshold: %f, ZEM threshold: %f",T_GO_THRESHOLD, ZEM_THRESHOLD);
-				ROS_WARN("Skipping because separation angle is: %f", allThreats[i].separationV.getAngle());
-			}
+		// if (fabs( allThreats[i].separationV.getAngle() - thisPlane.getCurrentBearing()) > 67.5) {
+		// 	if (IPN_PRINT_DEBUG_1) {
+		// 		ROS_WARN("Plane #%i - %f meters away, t_go = %f, ZEM = %f", 
+		// 			allThreats[i].threatPlane->getID(), allThreats[i].separationDistance, t_go, ZEM);
+		// 		ROS_WARN("t_go threshold: %f, ZEM threshold: %f",T_GO_THRESHOLD, ZEM_THRESHOLD);
+		// 		ROS_WARN("Skipping because separation angle is: %f", allThreats[i].separationV.getAngle());
+		// 	}
 
-			continue;
-		}
+		// 	continue;
+		// }
 
 		if (greatestThreat == NULL) {
 			greatestThreat = &allThreats[i];
 		} else if (ZEM <= CONFLICT_THRESHOLD) {
-			greatestThreat = &allThreats[i];
+			if (greatestThreat->ZEM <= CONFLICT_THRESHOLD) {
+				if (t_go < greatestThreat->t_go || ZEM < greatestThreat->ZEM) {
+					greatestThreat = &allThreats[i];
+				}
+			} else {
+				greatestThreat = &allThreats[i];
+			}
 		} else if (t_go < greatestThreat->t_go && greatestThreat->ZEM > CONFLICT_THRESHOLD) {
 			greatestThreat = &allThreats[i];
 		}
