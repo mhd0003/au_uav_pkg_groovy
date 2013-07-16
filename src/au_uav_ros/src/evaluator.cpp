@@ -11,8 +11,6 @@ using std::list;
 using std::map;
 using std::string;
 
-#define EVAL_PRINT_DEBUG true
-
 void Evaluator::run(void) {
 	ros::spin();
 }
@@ -23,19 +21,19 @@ void Evaluator::init(ros::NodeHandle _n) {
 }
 
 void Evaluator::setup(void) {
-	addPlaneClient = n.serviceClient<au_uav_ros::AddPlane>("add_plane");
-	loadCourseClient = n.serviceClient<au_uav_ros::LoadCourse>("load_course");
-	removePlaneClient = n.serviceClient<au_uav_ros::RemovePlane>("remove_plane");
-	// saveFlightDataClient = n.serviceClient<SaveFlightData>("save_flight_data");
 
-	shutdownTopic = n.subscribe("component_shutdown", 1000, &Evaluator::component_shutdown, this);
+	addPlaneClient = n.serviceClient<AddPlane>("add_plane");
+	loadCourseClient = n.serviceClient<LoadCourse>("load_course");
+	removePlaneClient = n.serviceClient<RemovePlane>("remove_plane");
+
+	shutdownTopic = n.advertise<std_msgs::String>("component_shutdown", 1000, true);
+	// shutdownTopic = n.subscribe("component_shutdown", 1000, &Evaluator::component_shutdown, this);
 	telemetryTopic = n.subscribe("telemetry", 1000, &Evaluator::telemetry, this);
-	
+
 	//get the file input
 	char filename[256];
-	printf("\nEnter the filename of the course to load:");
+	printf("\nEnter the filename of the course to load 22:");
 	scanf("%s", filename);
-	
 	printf("\nEnter the filename for output:");
 	scanf("%s", scoresheetFilename);
 
@@ -45,52 +43,41 @@ void Evaluator::setup(void) {
 	//create all our UAVs
 	if(!createCourseUAVs(filename))
 	{
-		ROS_ERROR("Error creating UAVs");
-
-		if (EVAL_PRINT_DEBUG) {
-			ROS_ERROR("Evaluator::setup() course failed to load!");
-		}
-		
-		return;
+		ROS_ERROR("createCourseUAVs failed! Shutting down now...");
+		shutdown();
 	}
 	
-	LoadCourse srv;
-	srv.request.wipe = true;
-	srv.request.filename = (ros::package::getPath("au_uav_ros")+"/courses/evaluator/"+filename).c_str();
-
-	//countdown to success
+	//success
 	system("clear");
 	printf("\n");
 	printf("Last Plane ID: %d\n", lastPlaneID);
 	printf("KML File: %s.kml\n", scoresheetFilename);
 	printf("Score File: %s.score\n", scoresheetFilename);
-	
-	if (EVAL_PRINT_DEBUG) {
-		ROS_INFO("loadCourseClient service call filename: %s",
-			(ros::package::getPath("au_uav_ros")+"/courses/evaluator/"+filename).c_str());
-	}
 
 	//call the load course function on the coordinator
+	LoadCourse srv;
+	srv.request.filename = (ros::package::getPath("au_uav_ros")+"/courses/"+filename).c_str();
 	loadCourseClient.call(srv);
 	
-	waypointsTotal = 0;
-	numConflicts = 0;
-	numCollisions = 0;
-	deadPlaneCount = 0;
-	totalDistTraveled = 0;
-	totalMinDist = 0;
-	score = 0;
-	lastPlaneID = -1;
-	maxAlivePlane = -1;
-
 	//set the start time to now
 	startTime = ros::Time::now();
 }
 
-void Evaluator::component_shutdown(const std_msgs::String::ConstPtr &msg) {
-	ROS_INFO("Evaluator shutdown...");
+/*
+ * Shutdown all nodes listening to component_shutdown topic.
+ */
+void Evaluator::shutdown(void) {
+	std_msgs::String msg;
+	msg.data = "shut it down";
+	shutdownTopic.publish(msg);
+
+	ros::Duration(1.0).sleep();
+	ROS_ERROR("Evaluator: %s", msg.data.c_str());
 	ros::shutdown();
 }
+// void Evaluator::component_shutdown(const std_msgs::String::ConstPtr &msg) {
+// 	ros::shutdown();
+// }
 
 /*
 displayOutput()
@@ -133,11 +120,6 @@ This function is called upon termination of the simulation
 */
 void Evaluator::endEvaluation(void)
 {
-	if (EVAL_PRINT_DEBUG) {
-		ROS_INFO("Evaluator::endEvaluation() looking to save scores in: %s",
-			(ros::package::getPath("au_uav_ros")+"/scores/"+scoresheetFilename+".score").c_str());
-	}
-
 	//open our scoring file
 	FILE *fp;
 	fp = fopen((ros::package::getPath("au_uav_ros")+"/scores/"+scoresheetFilename+".score").c_str(), "w");
@@ -146,6 +128,7 @@ void Evaluator::endEvaluation(void)
 	if(fp == NULL)
 	{
 		printf("\nERROR SAVING DATA, COPY TERMINAL OUTPUT!!!\n");
+		ros::Duration(5.0).sleep();
 	}
 	else
 	{
@@ -159,7 +142,7 @@ void Evaluator::endEvaluation(void)
 		fprintf(fp, "--------\t--------------------\t-----------------\t\t------------------\t----------------\n");
 		for(int id = 0; id <= lastPlaneID; id++)
 		{
-			fprintf(fp, "%d\t\t%lf\t\t%lf\t\t\t%d\t\t\t", id, waypointDistTraveled[id], minimumTravelDistance[id], waypointsAchieved[id]);
+			fprintf(fp, "%d\t\t\t\t%lf\t\t\t\t%lf\t\t\t\t\t%d\t\t\t\t\t", id, waypointDistTraveled[id], minimumTravelDistance[id], waypointsAchieved[id]);
 			if(isDead[id])
 			{
 				fprintf(fp, "%lf\n", timeOfDeath[id].toSec());
@@ -184,7 +167,7 @@ void Evaluator::endEvaluation(void)
 				averageDeath+=ros::Duration(TIME_LIMIT);
 			}
 		}
-		fprintf(fp, "Averages:\t%lf\t\t%lf\t\t\t%lf\t\t%lf\n", totalDistTraveled/(lastPlaneID+1), totalMinDist/(lastPlaneID+1), waypointsTotal/(lastPlaneID+1.0), averageDeath.toSec()/(lastPlaneID+1.0));
+		fprintf(fp, "Averages:\t\t%lf\t\t\t\t%lf\t\t\t%lf\t\t\t\t%lf\n", totalDistTraveled/(lastPlaneID+1), totalMinDist/(lastPlaneID+1), waypointsTotal/(lastPlaneID+1.0), averageDeath.toSec()/(lastPlaneID+1.0));
 		fprintf(fp, "\n");
 		fprintf(fp, "Totals:\n");
 		fprintf(fp, "Elapsed time:%lf\n", (ros::Time::now() - startTime).toSec());
@@ -212,18 +195,6 @@ void Evaluator::endEvaluation(void)
 		fclose(allFP);
 	}//else
 	
-	//try to tell the KML Creator to stop
-	// SaveFlightData srv;
-	// srv.request.filename = (string(scoresheetFilename)+".kml");
-	// if(saveFlightDataClient.call(srv))
-	// {
-	// 	printf("Flight data saved successfully!\n");
-	// }
-	// else
-	// {
-	// 	ROS_ERROR("Error saving flight data");
-	// }
-	
 
 	//get the pid of the automator
 	int ppid;
@@ -237,14 +208,15 @@ void Evaluator::endEvaluation(void)
 /*
 	//open file to let automator know we are done
 	FILE *dp;
-	dp = fopen((ros::package::getPath("au_uav_ros")+"/courses/evaluator/"+DONE_FILE).c_str(), "w");
+	dp = fopen((ros::package::getPath("au_uav_ros")+"/courses/"+DONE_FILE).c_str(), "w");
 	fprintf(dp,"y");
 	fclose(dp);
 */
 
 
 	//terminate the program
-	exit(0);
+	// exit(0);
+	shutdown();
 }
 
 /*
@@ -256,13 +228,8 @@ bool Evaluator::createCourseUAVs(string filename)
 {
 	//open our file
 	FILE *fp;
-	fp = fopen((ros::package::getPath("au_uav_ros")+"/courses/evaluator/"+filename).c_str(), "r");
+	fp = fopen((ros::package::getPath("au_uav_ros")+"/courses/"+filename).c_str(), "r");
 	
-	if (EVAL_PRINT_DEBUG) {
-		ROS_INFO("Evaluator::createCourseUAVs(string) looking for file: %s",
-			(ros::package::getPath("au_uav_ros")+"/courses/evaluator/"+filename).c_str());
-	}
-
 	//check for a good file open
 	if(fp != NULL)
 	{
@@ -282,9 +249,11 @@ bool Evaluator::createCourseUAVs(string filename)
 				//set some invalid defaults
 				int planeID = -1;
 				struct waypoint tempWP;
+				int normal;
+				int type;
 
 				//parse the string
-				sscanf(buffer, "%d %lf %lf %lf\n", &planeID, &tempWP.latitude, &tempWP.longitude, &tempWP.altitude);
+				sscanf(buffer, "%d %lf %lf %lf %d\n", &planeID, &tempWP.latitude, &tempWP.longitude, &tempWP.altitude, &type);
 				//check for the invalid defaults
 				if(planeID == -1 || tempWP.latitude == -1000 || tempWP.longitude == -1000 || tempWP.altitude == -1000)
 				{
@@ -303,20 +272,18 @@ bool Evaluator::createCourseUAVs(string filename)
 				if(isFirstPoint.find(planeID) == isFirstPoint.end())
 				{
 					isFirstPoint[planeID] = true;
-
+					
 					//set our last plane ID to this one
 					lastPlaneID = planeID;
 					maxAlivePlane = planeID;
 					
 					//set up some base values for a new plane
 					// latestUpdatesMap[planeID] = Telemetry();
-					// latestUpdatesMap[planeID];
 					latestUpdatesMap[planeID].currentLatitude = tempWP.latitude;
 					latestUpdatesMap[planeID].currentLongitude = tempWP.longitude;
 					latestUpdatesMap[planeID].currentAltitude = tempWP.altitude;
 					
 					// previousUpdatesMap[planeID] = Telemetry();
-					// previousUpdatesMap[planeID];
 					previousUpdatesMap[planeID].currentLatitude = tempWP.latitude;
 					previousUpdatesMap[planeID].currentLongitude = tempWP.longitude;
 					previousUpdatesMap[planeID].currentAltitude = tempWP.altitude;
@@ -342,10 +309,6 @@ bool Evaluator::createCourseUAVs(string filename)
 					lastAvoidWaypoints[planeID] = wp;
 				}
 			}
-		}
-
-		if (EVAL_PRINT_DEBUG) {
-			ROS_INFO("createCourseUAVs loaded %li planes", isFirstPoint.size());
 		}
 
 		//if we make it here everything happened according to plan
@@ -508,12 +471,11 @@ void Evaluator::telemetry(const Telemetry &msg) {
 				printf("\nRequesting to delete plane... %d\n",id);
 				if(removePlaneClient.call(srv))
 				{
-					//printf("Plane with ID #%d has been deleted!\n", planeID);
-					ROS_INFO("Plane with ID #%d has been deleted!\n", id);
+					printf("Plane with ID #%d has been deleted!\n", id);
 				}
 				else
 				{
-					ROS_ERROR("Did not receive a response");
+					ROS_ERROR("Did not receive a response from removePlaneClient");
 				}
 				
 				//mark us dead
@@ -524,12 +486,11 @@ void Evaluator::telemetry(const Telemetry &msg) {
 			
 			//if our max plane ID is a dead plane, we no longer receive updates, so we need 
 			//to be waiting on a new max for updating the screen
-
 			while(maxAlivePlane >= 0 && isDead[maxAlivePlane])
 			{
 				//decrement our valu
 				maxAlivePlane--;
-				ROS_ERROR("MAX: %d",maxAlivePlane);
+				//ROS_ERROR("MAX: %d",maxAlivePlane);
 			}
 			
 			//check to make sure not all planes are dead
@@ -554,7 +515,7 @@ void Evaluator::telemetry(const Telemetry &msg) {
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "evaluator");
+	ros::init(argc, argv, "Evaluator");
 	ros::NodeHandle n;
 	Evaluator e;
 	e.init(n);

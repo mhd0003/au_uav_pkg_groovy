@@ -20,7 +20,6 @@
 #include "au_uav_ros/AddPlane.h"
 #include "au_uav_ros/LoadCourse.h"
 #include "au_uav_ros/RemovePlane.h"
-// #include "au_uav_ros/SaveFlightData.h"
 
 //message includes
 #include "au_uav_ros/Telemetry.h"
@@ -35,7 +34,7 @@
 #define ALL_SCORES_ENDING "_scores.txt"
 
 // #define PID_FILE_FULL "/home/phil/fuerte_workspace/sandbox/AU_UAV_stack/au_uav_ros/courses/pid.txt"
-#define PID_FILE_FULL "/home/monzy/catkin_ws/src/au_uav_ros/courses/evaluator/pid.txt"
+#define PID_FILE_FULL "/home/monzy/catkin_ws/src/au_uav_ros/courses/pid.txt"
 
 namespace au_uav_ros {
 	class Evaluator {
@@ -43,6 +42,7 @@ namespace au_uav_ros {
 		void run(void);
 		void init(ros::NodeHandle _n);
 		void setup(void);
+		void shutdown(void);
 		void component_shutdown(const std_msgs::String::ConstPtr &msg);
 		void displayOutput(void);
 		void endEvaluation(void);
@@ -51,7 +51,8 @@ namespace au_uav_ros {
 
 
 	private:
-		ros::Subscriber shutdownTopic;
+		ros::Publisher shutdownTopic;
+		// ros::Subscriber shutdownTopic;
 		ros::Subscriber telemetryTopic;
 
 		ros::ServiceClient addPlaneClient;

@@ -1,3 +1,0 @@
-base_8_500m_0.course
-base_8_500m_1.course
-base_8_500m_2.course
