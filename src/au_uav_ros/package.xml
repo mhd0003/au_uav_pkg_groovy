@@ -2,7 +2,7 @@
 <package>
   <name>au_uav_ros</name>
   <version>0.0.0</version>
-  <description>The AU_UAV_ROS package</description>
+  <description>The au_uav_ros package</description>
 
   <maintainer email="craig.fisher@scranton.edu">Craig Fisher</maintainer>
   <maintainer email="jzt0011@auburn.edu">Jonathan Taylor</maintainer>

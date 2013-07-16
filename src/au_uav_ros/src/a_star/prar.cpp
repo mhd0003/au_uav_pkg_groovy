@@ -48,7 +48,6 @@ std::map<int, map_tools::waypointPath> getAStarPath(std::map<int, au_uav_ros::Pl
 		allPlanesPaths[i] = astarPlaneToDestination(&discretePlanes, i);
 		std::cout << "Finished planning for plane: " << i << "\n";
 	}
-
 	return allPlanesPaths;
 }
 
@@ -63,15 +62,26 @@ waypointPath astarPlaneToDestination(std::map<int, DiscretizedPlane> *discretePl
 	// worth of danger grids for all the plane's from. This should hopefully be enough. Could decrease if speed matters, and all the planes never take longer than 100
 	// seconds to reach their destinations
 	DangerGrid bc = DangerGrid(discretePlanes, planeID, 0, 50, gridVals);
+
 	std::queue<point> fullPath = astar_point(&bc, startx, starty, endx, endy, planeID, bearingNamed, discretePlanes, gridVals);
 
 	// generates full waypoint path from A* queue
+	double decimalXPadding = (*discretePlanes)[planeID].getLocation().getDecimalX() - startx;
+	double decimalYPadding = (*discretePlanes)[planeID].getLocation().getDecimalY() - starty;
+	cout << decimalXPadding << " " << decimalYPadding << "\n";
+
 	waypointPath legPath;
 	legPath.startWaypointIndex = -1;
 	Position pos = Position(gridVals, 0, 0);
+	// if (!fullPath.empty()) {
+	// 	fullPath.pop();
+	// }
+	// if (!fullPath.empty()) {
+	// 	fullPath.pop();
+	// }
 	while (!fullPath.empty()) {
 		point nextPoint = fullPath.front();
-		pos.setXY(nextPoint.x, nextPoint.y);
+		pos.setXY(nextPoint.x + decimalXPadding, nextPoint.y + decimalYPadding);
 		au_uav_ros::waypoint nextWay;
 		nextWay.latitude = pos.getLat();
 		nextWay.longitude = pos.getLon();
@@ -81,6 +91,17 @@ waypointPath astarPlaneToDestination(std::map<int, DiscretizedPlane> *discretePl
 
 	(*discretePlanes)[planeID].addAvoidancePath(legPath);
 	(*discretePlanes)[planeID].moveThroughTime((*discretePlanes)[planeID].getBearing(), false);
+
+	// // md
+	// legPath.pathWaypoints.clear();
+	// vector<Position> *positions = (*discretePlanes)[planeID].getLocationsThroughTime(); 
+	// for (int i = 0; i < positions->size(); i++) {
+	// 	au_uav_ros::waypoint nextPos;
+	// 	nextPos.latitude = (*positions)[i].getLat();
+	// 	nextPos.longitude = (*positions)[i].getLon();
+	// 	legPath.pathWaypoints.push_back(nextPos);
+	// }
+
 	return legPath;
 }
 
@@ -273,6 +294,7 @@ void generateMapValuesFromWaypoints(map_tools::gridValues &gridValsOut, std::map
 	double upperLeftLon = 1000;
 	double bottomLeftLat = 1000;
 	double upperRightLon = -1000;
+
 	for (std::map<int, std::vector<au_uav_ros::waypoint> >::iterator it =allPlanesWaypoints->begin(); it != allPlanesWaypoints->end(); it++) {
 		//it->second is the vector of that plane's waypoints
 		for (int i = 0; i < it->second.size(); i++) {
@@ -310,7 +332,7 @@ void generateMapValuesFromWaypoints(map_tools::gridValues &gridValsOut, std::map
 
 DiscretizedPlane convertRealPlane(au_uav_ros::PlaneObject continuousPlane, std::vector<au_uav_ros::waypoint> allWaypoints) {
 	Position current = Position(gridVals, continuousPlane.getCurrentLoc().latitude, continuousPlane.getCurrentLoc().longitude);
-	Position goal = Position(gridVals, continuousPlane.getDestination().latitude, continuousPlane.getDestination().longitude);
+	Position goal = Position(gridVals, allWaypoints[0].latitude, allWaypoints[0].longitude);
 	DiscretizedPlane dPlane(continuousPlane.getID(), current, goal);
 	dPlane.setBearing(continuousPlane.getCurrentBearing());
 

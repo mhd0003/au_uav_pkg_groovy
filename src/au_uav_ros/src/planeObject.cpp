@@ -139,11 +139,7 @@ bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
         //this means we reached the avoidance wp and so the next command should be issued
         avoidWp = INVALID_WP;
         isCommand = true;
-    }
-    else if (!plannedPath.empty() && msg.distanceToDestination > -WAYPOINT_THRESHOLD && msg.distanceToDestination < WAYPOINT_THRESHOLD) {
-        plannedPath.pop_front();
-        isCommand = true;
-    }
+    } 
     //if here then destination is in normalPath
     //next see if we need to dump any points from the normal path (dump wp if within 1s of it)
     else if(!normalPath.empty() && msg.distanceToDestination > -WAYPOINT_THRESHOLD && msg.distanceToDestination < WAYPOINT_THRESHOLD)
@@ -154,6 +150,15 @@ bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
         if (!normalPath.empty()) isCommand = true;
     }
 
+    // while (!plannedPath.empty() && distanceBetween(currentLoc, plannedPath.front()) < WAYPOINT_THRESHOLD) {
+    //     plannedPath.pop_front();
+    //     isCommand = true;
+    // }
+
+    if (!plannedPath.empty()) {
+        plannedPath.pop_front();
+        isCommand = true;
+    }
 
     //if we have a command to process, process it
     if(isCommand)
@@ -168,7 +173,6 @@ bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
             return true;
         } else if (!plannedPath.empty()) {
             newCommand.commandID = COMMAND_AVOID_WP;
-            // newCommand.commandID = COMMAND_NORMAL_WP; // TODO: which do I choose?
             newCommand.commandHeader.stamp = ros::Time::now();
             newCommand.planeID = id;
             newCommand.latitude = plannedPath.front().latitude;
@@ -340,6 +344,15 @@ Command PlaneObject::getPriorityCommand(void) {
         ret.altitude = avoidWp.altitude;
         ret.commandID = COMMAND_AVOID_WP; 
     }
+    else if (!plannedPath.empty())
+    {
+        //we have a point from the planning algorithm
+        ret.planeID = this->id;
+        ret.latitude = plannedPath.front().latitude;
+        ret.longitude = plannedPath.front().longitude;
+        ret.altitude = plannedPath.front().altitude;
+        ret.commandID = COMMAND_AVOID_WP; 
+    }
     else if (!normalPath.empty())
     {
         //we have a normal path point at least, fill it out
@@ -357,11 +370,18 @@ Command PlaneObject::getPriorityCommand(void) {
 }
 
 std::vector<waypoint> PlaneObject::getNormalPath(void) {
+    std::vector<waypoint> allWaypoints;
     if (avoidWp != INVALID_WP) {
         normalPath.push_front(avoidWp);
     }
 
-    std::vector<waypoint> allWaypoints;
+	// md
+	// Something in A* code causes Coordinator node to crash
+	// if it doesn't get any waypoints 
+    if (normalPath.size() == 0) {
+        ROS_ERROR("No normal waypoints! Adding current location...");
+        normalPath.push_back(currentLoc);
+    }
     allWaypoints.reserve(normalPath.size());
     allWaypoints.insert(allWaypoints.begin(), normalPath.begin(), normalPath.end());
 

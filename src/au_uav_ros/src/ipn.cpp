@@ -38,9 +38,11 @@ bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> 
 		ROS_INFO("Checking for threats to plane #%i...", thisPlane.getID());
 	}
 
+	// md	
+	// TODO: Lower the threshold if path planning active
 	/* Set threshold values for this plane's speed */
-	SEPARATION_THRESHOLD = thisPlane.getSpeed() * 10.0 / MU;
-	ZEM_THRESHOLD = thisPlane.getSpeed() * 3.5 / MU;
+	SEPARATION_THRESHOLD = thisPlane.getSpeed() * 10.0;
+	ZEM_THRESHOLD = thisPlane.getSpeed() * 3.5;
 
 	std::vector<threatInfo> allThreats;
 	allThreats.resize(allPlanes.size());
@@ -192,7 +194,7 @@ ipn::threatInfo* ipn::findGreatestThreat(std::vector<ipn::threatInfo> &allThreat
 			ROS_INFO("t_go threshold: %f, ZEM threshold: %f",T_GO_THRESHOLD, ZEM_THRESHOLD);
 		}
 
-		if (ZEM < 0 || t_go < 0 || ZEM > ZEM_THRESHOLD || t_go > T_GO_THRESHOLD) {
+		if (ZEM < 0 || t_go < 0 || ZEM > ZEM_THRESHOLD) {
 			continue;
 		}
 
@@ -210,7 +212,13 @@ ipn::threatInfo* ipn::findGreatestThreat(std::vector<ipn::threatInfo> &allThreat
 		if (greatestThreat == NULL) {
 			greatestThreat = &allThreats[i];
 		} else if (ZEM <= CONFLICT_THRESHOLD) {
-			greatestThreat = &allThreats[i];
+			if (greatestThreat->ZEM <= CONFLICT_THRESHOLD) {
+				if (t_go < greatestThreat->t_go || ZEM < greatestThreat->ZEM) {
+					greatestThreat = &allThreats[i];
+				}
+			} else {
+				greatestThreat = &allThreats[i];
+			}
 		} else if (t_go < greatestThreat->t_go && greatestThreat->ZEM > CONFLICT_THRESHOLD) {
 			greatestThreat = &allThreats[i];
 		}

@@ -1,6 +1,6 @@
 //
 //  map_tools.h
-//  au_uav_ros
+//  AU_UAV_ROS
 //
 //  Created by Tyler Young on 5/26/11.
 //
@@ -10,7 +10,7 @@
 #define MAP_TOOLS
 
 #include <math.h>
-#include "au_uav_ros/standardFuncs.h"
+#include "AU_UAV_ROS/standardFuncs.h"
 
 #ifdef DEBUG
 #include <cassert>
@@ -50,7 +50,7 @@ namespace map_tools
 		// the waypoint to start applying this path after until the next waypoint is reached
 		// Waypoint -1 is the plane's starting position and waypoint 0 is the first waypoint etc.
 		int startWaypointIndex;
-		std::vector<au_uav_ros::waypoint> pathWaypoints;
+		std::vector<AU_UAV_ROS::waypoint> pathWaypoints;
 	};
 
     enum bearing_t { N, NE, E, SE, S, SW, W, NW };

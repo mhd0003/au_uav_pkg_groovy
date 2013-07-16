@@ -1,10 +1,14 @@
 #include "au_uav_ros/coordinator.h"
 using namespace au_uav_ros;
+using std::cout;
+using std::endl;
 
 #define COORD_PRINT_DEBUG true
 #define COORD_PRINT_DEBUG_ASTAR_0 true
 #define COORD_PRINT_DEBUG_ASTAR_1 true
 #define COORD_PRINT_DEBUG_ASTAR_2 true
+#define COORD_PRINT_DEBUG_TIME true
+
 void Coordinator::run(void) {
 	ros::spin();
 }
@@ -17,6 +21,10 @@ void Coordinator::init(ros::NodeHandle _n) {
 void Coordinator::setup(void) {
 	if (n.getParam("runPathPlanner", planPath)) {
 		//planPath = $(arg planPath)
+		// md
+		if (planPath) {
+			planPathTimer = n.createTimer(ros::Duration(5.0), &Coordinator::plan, this);
+		}
 	} else {
 		planPath = false;
 	}
@@ -35,7 +43,7 @@ void Coordinator::setup(void) {
 			ROS_INFO("Running decentralized collision avoidance!");
 		}
 	}
-	
+
 	shutdownTopic = n.subscribe("component_shutdown", 1000, &Coordinator::component_shutdown, this);
 	addPlaneService = n.advertiseService("add_plane", &Coordinator::add_plane, this);
 	setWpService = n.advertiseService("set_wp", &Coordinator::set_wp, this);
@@ -281,7 +289,14 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 			// Decentralized collision avoidance here
 
 			waypoint avoidanceWP;
+			// ros::Time start = ros::Time::now();
 			ca.distrubuted_avoid(msg.planeID, planes, simPlanes, avoidanceWP);
+			// ros::Time end = ros::Time::now();
+
+			// if (COORD_PRINT_DEBUG_TIME) {
+			// 	ROS_INFO("ipn ran in %f secs", (end-start).toSec());
+			// }
+			
 
 			if (avoidanceWP == INVALID_WP) {
 				planeAvoiding.reset(msg.planeID);
@@ -304,41 +319,107 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 		return;
 	}
 
-	// A* logic
-	// TODO: Only works for distributed, simulated planes at the moment.
-	if (planPath) {
-		// int planesCount = planes.size();
-		int simPlanesCount = simPlanes.size();
-		planeUpdated.set(msg.planeID);
+	// // A* logic
+	// // TODO: Only works for distributed, simulated planes at the moment.
+	// if (planPath) {
+	// 	// int planesCount = planes.size();
+	// 	int simPlanesCount = simPlanes.size();
+	// 	planeUpdated.set(msg.planeID);
 
-		// Check if all planes have been updated
-		if (planeUpdated.count() == (simPlanesCount)) {
-			if (COORD_PRINT_DEBUG_ASTAR_0) {
-				ROS_INFO("All planes updated. Calling path planner...");
-			}
+	// 	// Check if all planes have been updated
+	// 	if (planeUpdated.count() == (simPlanesCount)) {
+	// 		if (COORD_PRINT_DEBUG_ASTAR_0) {
+	// 			// ROS_INFO("All planes updated. Calling path planner...");
+	// 		}
 
-			std::map<int, std::vector<waypoint> > allPlanesPath;
-			ca.astar_planPath(planes, simPlanes, allPlanesPath);
+	// 		std::map<int, std::vector<waypoint> > allPlanesPath;
 
-			std::map<int, std::vector<waypoint> >::iterator it;
-			for (it = allPlanesPath.begin(); it != allPlanesPath.end(); it++) {
-				if (planes.find(it->first) != planes.end()) {
-					// TODO: real planes
-				} else if (simPlanes.find(it->first) != simPlanes.end()) {
-					if (COORD_PRINT_DEBUG_ASTAR_1) {
-						ROS_INFO("Planned path for #%d has %li waypoints.", it->first, allPlanesPath[it->first].size());
-						if (planeAvoiding.test(it->first)) {
-							ROS_WARN("Plane #%d is busy avoiding a threat.", it->first);
-						}
-					}
+	// 		ros::Time start = ros::Time::now();
+	// 		ca.astar_planPath(planes, simPlanes, allPlanesPath);
+	// 		ros::Time end = ros::Time::now();
+
+	// 		if (COORD_PRINT_DEBUG_TIME) {
+	// 			ROS_INFO("Planner ran in %f secs", (end-start).toSec());
+	// 		}
+
+	// 		std::map<int, std::vector<waypoint> >::iterator it;
+	// 		for (it = allPlanesPath.begin(); it != allPlanesPath.end(); it++) {
+	// 			if (planes.find(it->first) != planes.end()) {
+	// 				// TODO: real planes
+	// 			} else if (simPlanes.find(it->first) != simPlanes.end()) {
+	// 				if (COORD_PRINT_DEBUG_ASTAR_1) {
+	// 					// ROS_INFO("Planned path for #%d has %li waypoints.", it->first, allPlanesPath[it->first].size());
+	// 					if (planeAvoiding.test(it->first)) {
+	// 						ROS_WARN("Plane #%d is busy avoiding a threat.", it->first);
+	// 					}
+	// 				}
 					
-					if (!planeAvoiding.test(it->first)) {
-						simPlanes[it->first].setPlannedPath(allPlanesPath[it->first]);
-					}
+	// 				if (!planeAvoiding.test(it->first)) {
+	// 					simPlanes[it->first].setPlannedPath(allPlanesPath[it->first]);
+	// 				}
+	// 			}
+	// 		}
+
+	// 		planeUpdated.reset();
+	// 	}
+	// }
+}
+
+void Coordinator::plan(const ros::TimerEvent& e) {
+cout << endl << "coord entering astar_planPath(...)" << endl << endl;
+
+	std::map<int, std::vector<waypoint> > allPlanesPath;
+
+	ros::Time start = ros::Time::now();
+	ca.astar_planPath(planes, simPlanes, allPlanesPath);
+	ros::Time end = ros::Time::now();
+
+cout << endl << "coord returned to plan(...) "
+	<< (end-start).toSec() << " seconds later" << endl << endl;
+
+	if (COORD_PRINT_DEBUG_TIME) {
+		ROS_INFO("Planner ran in %f secs", (end-start).toSec());
+	}
+
+	std::map<int, std::vector<waypoint> >::iterator it;
+	for (it = allPlanesPath.begin(); it != allPlanesPath.end(); it++) {
+		if (planes.find(it->first) != planes.end()) {
+			// TODO: real planes
+		} else if (simPlanes.find(it->first) != simPlanes.end()) {
+			if (COORD_PRINT_DEBUG_ASTAR_1) {
+				// ROS_INFO("Planned path for #%d has %li waypoints.", it->first, allPlanesPath[it->first].size());
+				if (planeAvoiding.test(it->first)) {
+					ROS_WARN("Plane #%d is busy avoiding a threat.", it->first);
 				}
 			}
+			
+			if (!planeAvoiding.test(it->first)) {
+			// if (true) {
+cout << "Started with " << allPlanesPath[it->first].size() << " waypoints." << endl;
+				int pointsToSkip = (int) simPlanes[it->first].getSimSpeed();
+				// int pointsToSkip = 0;
 
-			planeUpdated.reset();
+cout << "Skipping " << pointsToSkip << " points." << endl;
+
+				std::vector<waypoint>::iterator itt = allPlanesPath[it->first].begin();
+				for (int i = 0; i < pointsToSkip; i++) {
+					if (itt == allPlanesPath[it->first].end()) {
+						break;
+					} else {
+						itt++;
+					}
+				}
+				while (itt != allPlanesPath[it->first].end()
+					&& distanceBetween(simPlanes[it->first].getCurrentLoc(), *itt) < WAYPOINT_THRESHOLD) {
+					itt++;
+				}
+
+				std::vector<waypoint> planePath(itt, allPlanesPath[it->first].end());
+
+cout << "Now have " << planePath.size() << " waypoints." << endl;
+
+				simPlanes[it->first].setPlannedPath(planePath);
+			}
 		}
 	}
 }

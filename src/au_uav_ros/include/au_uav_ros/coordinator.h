@@ -33,6 +33,8 @@
 namespace au_uav_ros {
 	class Coordinator {
 	private:
+		// md
+		ros::Timer planPathTimer;
 		/*
 		* Publish to this topic to shutdown the system
 		* Topic Name: "component_shutdown"
@@ -107,6 +109,8 @@ namespace au_uav_ros {
 		void run(void);
 		void init(ros::NodeHandle _n);
 		void setup(void);
+		// md
+		void plan(const ros::TimerEvent& e);
 		void component_shutdown(const std_msgs::String::ConstPtr &msg);
 		bool add_plane(AddPlane::Request &req, AddPlane::Response &res);
 		bool set_wp(SetWp::Request &req, SetWp::Response &res);

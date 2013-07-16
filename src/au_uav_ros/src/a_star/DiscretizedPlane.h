@@ -12,7 +12,7 @@
 
 #include "Position.h"
 #include "map_tools.h"
-#include "au_uav_ros/standardFuncs.h"
+#include "AU_UAV_ROS/standardFuncs.h"
 
 
 #ifndef RADIAN_CONSTANTS

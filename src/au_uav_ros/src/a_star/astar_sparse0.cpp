@@ -986,9 +986,9 @@ queue<point> astar_point(DangerGrid *bc, double sx, double sy, int endx, int end
 //		timey++;
 //		return at;
 //	}
-	
-	//printPathAndDanger(a_path, planeid, sx, sy, endx, endy,bc);
-	cout << "\n" << result << "\n";
+	if (planeid == 0 || planeid == 6) {
+		printPath(a_path, planeid, sx, sy, endx, endy,bc);
+	}
 	return a_path;
 //	int index = 0;
 //	while (!a_path.empty()) {

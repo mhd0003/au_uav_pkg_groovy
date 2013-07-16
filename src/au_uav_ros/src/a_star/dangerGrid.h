@@ -123,7 +123,7 @@ bool DangerGrid::isXYInGrid(int x, int y) {
 }
 
 void DangerGrid::addBuffer(int x, int y, int time, int planeID, int maxRecur) {
-	if (maxRecur < 3) {
+	if (maxRecur < 2) {
 		int xAround=x, yAround=y;
 		for (int i = 0; i < 8; i++) {
 			if (i == 0 && isXYInGrid(x+1, y)) {
