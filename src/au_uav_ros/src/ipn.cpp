@@ -323,8 +323,3 @@ waypoint ipn::createAvoidanceWaypoint(SimPlaneObject &thisPlane, threatInfo &thr
 
 	return wp;
 }
-
-/*  */
-bool ipn::setWaypoint(SimPlaneObject &thisPlane, waypoint &wp) {
-	return false;
-}
