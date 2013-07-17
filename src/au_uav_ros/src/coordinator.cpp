@@ -50,6 +50,7 @@ void Coordinator::setup(void) {
 }
 
 void Coordinator::component_shutdown(const std_msgs::String::ConstPtr &msg) {
+	ROS_ERROR("Coordinator: %s", msg->data.c_str());
 	ros::shutdown();
 }
 
@@ -286,7 +287,7 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 			newCmd.latitude = avoidanceWP.latitude;
 			newCmd.longitude = avoidanceWP.longitude;
 			newCmd.altitude = avoidanceWP.altitude;
-			commandTopic.publish(newCmd);
+			// commandTopic.publish(newCmd);
 		}
 	} else {
 		resolvePlaneID(msg);

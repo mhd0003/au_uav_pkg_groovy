@@ -68,6 +68,8 @@ add_executable(xbeeOut src/xbeeOut.cpp include/au_uav_ros/xbeeOut.h)
 add_executable(xbeeIn src/xbeeIn.cpp include/au_uav_ros/xbeeIn.h)
 add_executable(guiInterfacer src/guiInterfacer.cpp include/au_uav_ros/guiInterfacer.h)
 add_executable(coordinator src/coordinator.cpp include/au_uav_ros/coordinator.h)
+add_executable(evaluator src/evaluator.cpp include/au_uav_ros/evaluator.h)
+
 
 add_dependencies(standardDefs ${PROJECT_NAME}_gencpp)
 add_dependencies(standardFuncs ${PROJECT_NAME}_gencpp)
@@ -78,6 +80,7 @@ add_dependencies(xbeeOut ${PROJECT_NAME}_gencpp)
 add_dependencies(guiInterfacer ${PROJECT_NAME}_gencpp)
 add_dependencies(coordinator ${PROJECT_NAME}_gencpp)
 add_dependencies(planeBuilder ${PROJECT_NAME}_gencpp)
+add_dependencies(evaluator ${PROJECT_NAME}_gencpp)
 
 target_link_libraries(xbeeIn
   ${GLIB2_LIBRARY}
@@ -104,7 +107,8 @@ target_link_libraries(collisionAvoidance ripna ipn)
 target_link_libraries(simPlaneObject planeObject)
 target_link_libraries(simulator ${catkin_LIBRARIES} simPlaneObject)
 target_link_libraries(guiInterfacer ${catkin_LIBRARIES})
-target_link_libraries(coordinator ${catkin_LIBRARIES} planeBuilder simPlaneObject planeObject collisionAvoidance)
+target_link_libraries(coordinator ${catkin_LIBRARIES} planeBuilder simPlaneObject collisionAvoidance)
+target_link_libraries(evaluator ${catkin_LIBRARIES} standardDefs)
 
 catkin_package(
    INCLUDE_DIRS include
