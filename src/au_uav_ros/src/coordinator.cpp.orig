@@ -21,10 +21,13 @@ void Coordinator::init(ros::NodeHandle _n) {
 void Coordinator::setup(void) {
 	if (n.getParam("runPathPlanner", planPath)) {
 		//planPath = $(arg planPath)
+<<<<<<< HEAD
 		// md
 		if (planPath) {
 			planPathTimer = n.createTimer(ros::Duration(5.0), &Coordinator::plan, this);
 		}
+=======
+>>>>>>> ipn_only
 	} else {
 		planPath = false;
 	}
@@ -60,7 +63,6 @@ void Coordinator::setup(void) {
 }
 
 void Coordinator::component_shutdown(const std_msgs::String::ConstPtr &msg) {
-	// md
 	ROS_ERROR("Coordinator: %s", msg->data.c_str());
 	ros::shutdown();
 }
@@ -262,6 +264,7 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 			cmd.sim = true;
 			commandTopic.publish(cmd);
 		}
+
 		//call collision here
 		if (centralized) {
 			ca.avoid(msg.planeID, planes, simPlanes, avoidanceWps);
@@ -290,9 +293,10 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 			// Decentralized collision avoidance here
 
 			waypoint avoidanceWP;
-			ros::Time start = ros::Time::now();
+<<<<<<< HEAD
+			// ros::Time start = ros::Time::now();
 			ca.distrubuted_avoid(msg.planeID, planes, simPlanes, avoidanceWP);
-			ros::Time end = ros::Time::now();
+			// ros::Time end = ros::Time::now();
 
 			// if (COORD_PRINT_DEBUG_TIME) {
 			// 	ROS_INFO("ipn ran in %f secs", (end-start).toSec());
@@ -314,6 +318,18 @@ void Coordinator::telemetry(const au_uav_ros::Telemetry &msg) {
 				newCmd.altitude = avoidanceWP.altitude;
 				commandTopic.publish(newCmd);
 			}
+=======
+			ca.distrubuted_avoid(msg.planeID, planes, simPlanes, avoidanceWP);
+
+			Command newCmd;
+			newCmd.planeID = msg.planeID;
+			newCmd.sim = true;
+			newCmd.commandID = COMMAND_AVOID_WP;
+			newCmd.latitude = avoidanceWP.latitude;
+			newCmd.longitude = avoidanceWP.longitude;
+			newCmd.altitude = avoidanceWP.altitude;
+			// commandTopic.publish(newCmd);
+>>>>>>> ipn_only
 		}
 	} else {
 		resolvePlaneID(msg);

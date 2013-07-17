@@ -20,15 +20,13 @@ void CollisionAvoidance::avoid(int id, std::map<int, PlaneObject> planes, std::m
 		newWaypoint.planeID = id;
 		wps.push_back(newWaypoint);
 	}
+
 	if (bothNewWaypoints.plane2ID >= 0) {
 		waypoint newWaypoint2 = bothNewWaypoints.plane2WP;
 		newWaypoint2.planeID = bothNewWaypoints.plane2ID;
 		wps.push_back(newWaypoint2);
-
-		newWaypoint.planeID = id;
-		wps.push_back(newWaypoint);
-		
-	} /* TODO THIS IS BROKE */
+	}
+	/* TODO THIS IS BROKE */
 	/* TODO if ((requestWaypointInfoSrv.response.longitude == newWaypoint.longitude) 
 		&& (requestWaypointInfoSrv.response.latitude == newWaypoint.latitude)) {return;} what does this do */
 	/**newWaypoint.planeID = id;
@@ -63,8 +61,8 @@ void CollisionAvoidance::distrubuted_avoid(int id, std::map<int, PlaneObject> pl
 
 	if (ipn::checkForThreats(simPlanes[id], allPlanes, avoidanceWP)) {
 		avoidanceWP.planeID = id;
-		wps.push_back(avoidanceWP);
 	}
+<<<<<<< HEAD
 }
 
 
@@ -96,4 +94,6 @@ void CollisionAvoidance::astar_planPath(std::map<int, PlaneObject> planes,
 	for (itt = allPlanesWaypointPath.begin(); itt != allPlanesWaypointPath.end(); itt++) {
 		allPlanesPath[itt->first] = allPlanesWaypointPath[itt->first].pathWaypoints;
 	}
+=======
+>>>>>>> ipn_only
 }

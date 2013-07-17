@@ -29,13 +29,6 @@ namespace au_uav_ros {
 		bool shouldTurnRight(SimPlaneObject &thisPlane, threatInfo &threat);
 		waypoint createAvoidanceWaypoint(SimPlaneObject &thisPlane, threatInfo &threat);
 		bool setWaypoint(SimPlaneObject &thisPlane, waypoint &wp);
-
-		/* Dubins path functions */
-		/*
-		waypoint takeDubinsPath(PlaneObject &thisPlane);
-		waypoint calculateCircleCenter(PlaneObject &thisPlane, double turnRadius, bool turnRight);
-		waypoint calculateLoopingCircleCenter(PlaneObject &thisPlane, double turnRadius, bool turnRight);
-		*/
 	};
 };
 

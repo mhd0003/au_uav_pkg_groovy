@@ -24,9 +24,12 @@ namespace au_uav_ros {
 				std::map<int, PlaneObject> planes, 
 				std::map<int, SimPlaneObject> simPlanes,
 				waypoint &avoidanceWP);
+<<<<<<< HEAD
 		void astar_planPath(std::map<int, PlaneObject> planes,
 						std::map<int, SimPlaneObject> simPlanes,
 						std::map<int, std::vector<waypoint> > &allPlanesPath);
+=======
+>>>>>>> ipn_only
 	};
 }
 #endif

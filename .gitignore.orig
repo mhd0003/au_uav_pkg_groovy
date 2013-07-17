@@ -14,8 +14,13 @@
 
 *~
 build
-src/au_uav_ros/courses
-src/au_uav_ros/evaluator
-src/au_uav_ros/flightData
-src/au_uav_ros/paths
+<<<<<<< HEAD
 src/au_uav_ros/scores
+src/au_uav_ros/paths
+src/au_uav_ros/courses
+src/au_uav_ros/flightData
+=======
+src/au_uav_ros/courses
+src/au_uav_ros/scores
+src/au_uav_ros/evaluator
+>>>>>>> ipn_only

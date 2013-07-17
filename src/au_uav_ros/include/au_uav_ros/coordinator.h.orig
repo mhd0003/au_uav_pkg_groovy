@@ -100,10 +100,13 @@ namespace au_uav_ros {
 		std::list<int> newPlanes; //ids of real planes that have been loaded into system but have not been set in the air
 		bool centralized;
 		bool planPath;
+<<<<<<< HEAD
 
 		// used for A*
 		std::bitset<255> planeUpdated;
 		std::bitset<255> planeAvoiding;
+=======
+>>>>>>> ipn_only
 		
 	public:
 		void run(void);

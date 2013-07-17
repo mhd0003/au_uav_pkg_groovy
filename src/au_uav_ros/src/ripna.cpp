@@ -56,7 +56,7 @@ au_uav_ros::waypointContainer au_uav_ros::findNewWaypoint(PlaneObject &plane1, s
 	destination waypoint*/
 	if (((threatID < 0) && (threatZEM < 0)) || timeToGo > MINIMUM_TIME_TO_GO) {
 		bothNewWaypoints.plane1WP = takeDubinsPath(plane1);
-		bothNewWaypoints.plane2ID = -1;
+		bothNewWaypoints.plane2ID = -1000; // md
 		bothNewWaypoints.plane2WP = bothNewWaypoints.plane1WP;
 		return bothNewWaypoints;
 	}
@@ -135,6 +135,12 @@ au_uav_ros::threatContainer au_uav_ros::findGreatestThreat(PlaneObject &plane1, 
 		/* If it's not in the Check Zone, check the other plane*/
 		distanceBetween = plane1.findDistance(plane2);
 		if (distanceBetween > CHECK_ZONE || plane1.getID() == ID) continue;
+
+		// md
+		if (distanceBetween > 0 && distanceBetween < COLLISION_THRESHOLD) {
+			ROS_ERROR("Distance between #%d and %d is: %f",
+				plane1.getID(), plane2.getID(), distanceBetween);
+		}
 
 		else if (distanceBetween < MPS_SPEED) {
 			planeToAvoid = ID;

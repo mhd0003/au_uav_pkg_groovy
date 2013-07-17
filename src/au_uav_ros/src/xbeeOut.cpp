@@ -20,11 +20,24 @@ void XbeeOut::setup() {
 	recieveAckService = n.advertiseService("ack_recieved", &XbeeOut::ack_recieved, this);
 
 	fd = -1;
-	baud = 57600;
+	
+	if (!n.getParam("baud", baud)) {
+		baud = 57600;
+		n.setParam("baud", baud);
+	}
+
+	if (!n.getParam("port", port)) {
+		port =  "/dev/ttyUSB0";
+		n.setParam("port", port);
+	}
+
+	if (!n.getParam("compid", compid)) {
+		compid = 110;
+		n.setParam("compid", compid);	
+	}
+
 	sysid = -1;
-	compid = 110;
 	serial_compid = 0;
-	port = "/dev/ttyUSB0";
 	pc2serial = true;
 	updateIndex = 0;
 	WPSendSeqNum = 0;

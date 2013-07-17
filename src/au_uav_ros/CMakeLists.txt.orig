@@ -15,7 +15,10 @@ add_message_files(FILES
 add_service_files(FILES
   Ack.srv
   AddPlane.srv
+<<<<<<< HEAD
+=======
   Centralize.srv
+>>>>>>> prar
   CloseComms.srv
   Double.srv
   ExitCommand.srv
@@ -62,14 +65,21 @@ add_library(ripna src/ripna.cpp include/au_uav_ros/ripna.h)
 add_library(vector2D src/vector2D.cpp include/au_uav_ros/vector2D.h)
 add_library(ipn src/ipn.cpp include/au_uav_ros/ipn.h)
 add_library(collisionAvoidance src/collisionAvoidance.cpp include/au_uav_ros/collisionAvoidance.h)
+<<<<<<< HEAD
 add_library(prar src/prar.cpp include/au_uav_ros/prar.h)
+=======
+>>>>>>> prar
 
 add_executable(simulator src/simulator.cpp include/au_uav_ros/simulator.h)
 add_executable(xbeeOut src/xbeeOut.cpp include/au_uav_ros/xbeeOut.h)
 add_executable(xbeeIn src/xbeeIn.cpp include/au_uav_ros/xbeeIn.h)
 add_executable(guiInterfacer src/guiInterfacer.cpp include/au_uav_ros/guiInterfacer.h)
 add_executable(coordinator src/coordinator.cpp include/au_uav_ros/coordinator.h)
+<<<<<<< HEAD
+=======
 add_executable(evaluator src/evaluator.cpp include/au_uav_ros/evaluator.h)
+
+>>>>>>> prar
 
 add_dependencies(standardDefs ${PROJECT_NAME}_gencpp)
 add_dependencies(standardFuncs ${PROJECT_NAME}_gencpp)
@@ -80,7 +90,10 @@ add_dependencies(xbeeOut ${PROJECT_NAME}_gencpp)
 add_dependencies(guiInterfacer ${PROJECT_NAME}_gencpp)
 add_dependencies(coordinator ${PROJECT_NAME}_gencpp)
 add_dependencies(planeBuilder ${PROJECT_NAME}_gencpp)
+<<<<<<< HEAD
+=======
 add_dependencies(evaluator ${PROJECT_NAME}_gencpp)
+>>>>>>> prar
 
 target_link_libraries(xbeeIn
   ${GLIB2_LIBRARY}
@@ -103,12 +116,20 @@ target_link_libraries(ipn vector2D)
 target_link_libraries(standardDefs ${BOOST_LIBRARIES})
 target_link_libraries(planeBuilder standardDefs)
 target_link_libraries(planeObject standardFuncs standardDefs)
+<<<<<<< HEAD
+target_link_libraries(collisionAvoidance ripna ipn prar)
+target_link_libraries(simPlaneObject planeObject)
+target_link_libraries(simulator ${catkin_LIBRARIES} simPlaneObject)
+target_link_libraries(guiInterfacer ${catkin_LIBRARIES})
+target_link_libraries(coordinator ${catkin_LIBRARIES} planeBuilder simPlaneObject planeObject collisionAvoidance)
+=======
 target_link_libraries(collisionAvoidance ripna ipn)
 target_link_libraries(simPlaneObject planeObject)
 target_link_libraries(simulator ${catkin_LIBRARIES} simPlaneObject)
 target_link_libraries(guiInterfacer ${catkin_LIBRARIES})
 target_link_libraries(coordinator ${catkin_LIBRARIES} planeBuilder simPlaneObject collisionAvoidance)
 target_link_libraries(evaluator ${catkin_LIBRARIES} standardDefs)
+>>>>>>> prar
 
 catkin_package(
    INCLUDE_DIRS include
