@@ -35,7 +35,7 @@ waypoint getWaypoint(coordinate _coordinate) {
 */
 bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> &allPlanes, waypoint &avoidanceWP) {
 	if (IPN_PRINT_DEBUG_0) {
-		ROS_INFO("Checking for threats to plane #%i...", thisPlane.getID());
+		// ROS_INFO("Checking for threats to plane #%i...", thisPlane.getID());
 	}
 
 	// md	
@@ -55,6 +55,7 @@ bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> 
 
 	/* (2) Determine greatest threat */
 	threatInfo* greatestThreat = findGreatestThreat(allThreats);
+
 	if (greatestThreat == NULL) {
 		if (IPN_PRINT_DEBUG_0) {
 			ROS_INFO("Plane #%i - no greatest threat", thisPlane.getID());
@@ -67,6 +68,7 @@ bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> 
 				ROS_ERROR("it had t_go %f and ZEM %f", tC.timeToGo, tC.ZEM);
 			}
 		}
+
 		return false;
 	} else {
 		if (IPN_PRINT_DEBUG_0) {
@@ -211,6 +213,10 @@ ipn::threatInfo* ipn::findGreatestThreat(std::vector<ipn::threatInfo> &allThreat
 			ROS_INFO("t_go threshold: %f, ZEM threshold: %f",T_GO_THRESHOLD, ZEM_THRESHOLD);
 		}
 
+<<<<<<< HEAD
+=======
+		//if (ZEM < 0 || t_go < 0 || ZEM > ZEM_THRESHOLD || t_go > T_GO_THRESHOLD) {
+>>>>>>> ipn_only
 		if (ZEM < 0 || t_go < 0 || ZEM > ZEM_THRESHOLD) {
 			continue;
 		}

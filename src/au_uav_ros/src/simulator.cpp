@@ -44,6 +44,7 @@ void Simulator::setup(void) {
 }
 
 void Simulator::component_shutdown(const std_msgs::String::ConstPtr &msg) {
+	ROS_ERROR("Simulator: %s", msg->data.c_str());
 	ros::shutdown();
 }
 
@@ -136,5 +137,5 @@ int main(int argc, char **argv) {
 	Simulator s;
 	s.init(n);
 	s.run();
-	return 1;
+	return 0;
 }
