@@ -68,7 +68,7 @@ bool guiInterfacer::set_file_name(SendFilePath::Request &req, SendFilePath::Resp
 * Expected Ouput: None
 */
 void guiInterfacer::master_shutdown(const std_msgs::String::ConstPtr &msg) {
-	shutdownTopic.publish(msg);
+	// shutdownTopic.publish(msg);
 	//TODO possibly wait for components to shutdown
 	ros::shutdown();
 }

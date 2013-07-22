@@ -123,7 +123,7 @@ bool DangerGrid::isXYInGrid(int x, int y) {
 }
 
 void DangerGrid::addBuffer(int x, int y, int time, int planeID, int maxRecur) {
-	if (maxRecur < 2) {
+	if (maxRecur < 1) {
 		int xAround=x, yAround=y;
 		for (int i = 0; i < 8; i++) {
 			if (i == 0 && isXYInGrid(x+1, y)) {
@@ -169,7 +169,7 @@ void DangerGrid::addBuffer(int x, int y, int time, int planeID, int maxRecur) {
 			GridSquare *square = &airSpace[xAround][yAround][time];
 			DangerDescriptor dan;
 			dan.planeID = planeID;
-			dan.danger = 4;
+			dan.danger = 15;
 			square->addDanger(dan);
 		}
 	}
@@ -183,10 +183,16 @@ void DangerGrid::placeDangerRatings(std::map<int, DiscretizedPlane> *planes, int
 			int j = 0;
 			for (int i = startTime; i < locations->size() && i < endTime && j < endTime - startTime; i++) {
 				//std::cout << (*locations)[i].getX() << " " << (*locations)[i].getY() << " " << i << "\n";
-				GridSquare *square = &airSpace[(*locations)[i].getX()][(*locations)[i].getY()][j];
+				// Place the danger rating relative to this danger grid's plane, not the plane.
+				// So here we use current to convert the latitude and longitude to the proper x, y
+				// locations in this plane's grid. Basically, each plane has its own grid that it is
+				// centered on so don't trust the x, y of the plane, trust the lat, lon
+				Position temp = (*planes)[planeID].getLocation();
+				temp.setLatLon((*locations)[i].getLat(), (*locations)[i].getLon());
+				GridSquare *square = &airSpace[temp.getX()][temp.getY()][j];
 				DangerDescriptor dan;
 				dan.planeID = it->first;
-				dan.danger = 10;
+				dan.danger = 30;
 				square->addDanger(dan);
 				addBuffer((*locations)[i].getX(), (*locations)[i].getY(), j, it->first, 0);
 				j++;
@@ -202,7 +208,7 @@ int DangerGrid::getTimeLength() const {
 // same as get_pos
 double DangerGrid::operator()( int x, int y, int time ) const
 {
-    return airSpace[x][y][time +1].getTotalDanger() + distanceGrid[x][y];
+    return airSpace[x][y][time].getTotalDanger() + distanceGrid[x][y];
 }
 
 // TODO FIX name. right now its just to match with astar_sparse0 and take best_cost_straight out of the mix
@@ -213,7 +219,7 @@ double DangerGrid::get_pos(int x, int y, int time) const {
 //	}
 	//return airSpace[x][y][time].getTotalDanger() + distanceGrid[x][y];
 	//TODO fix this time + 1 hack to make A* line up with the right danger grids
-	return airSpace[x][y][time+1].getTotalDanger() + distanceGrid[x][y];
+	return airSpace[x][y][time].getTotalDanger() + distanceGrid[x][y];
 }
 
 int DangerGrid::get_width_in_squares() const

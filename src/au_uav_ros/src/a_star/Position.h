@@ -96,6 +96,8 @@ public:
      @param out_lon the longitude value to be changed. note it is an out parameter.
      **/
     void xy_to_latlon( double & out_lat, double & out_lon );
+
+	void decimal_xy_to_latlon( double & out_lat, double & out_lon );
 	/**
      A function that sets the x and y values of the position. They MUST be set together, if the Earth is round.
      If it happens that in the future the Earth becomes flat most of this code would be unusable and would have to be
@@ -105,6 +107,7 @@ public:
      @param y1 the y value to be set. It must be >=0 and <h
      **/
     void setXY(int x1, int y1);
+	void setDecimalXY(double x1, double y1);
 	/**
      A function used to set the latitude and longitude. As with setXY() they must be set together unless someone flattens the earth.
      The x and y values are also set with this function
@@ -288,6 +291,18 @@ void Position::setXY(int x1, int y1)
     decimal_y = y1;
     
     xy_to_latlon( lat, lon );
+    lat_lon_to_decimal_xy( decimal_x, decimal_y);
+	latLonToXY(x,y);
+}
+
+void Position::setDecimalXY(double x1, double y1)
+{
+    x=(int)x1;
+    y=(int)y1;
+    decimal_x = x1;
+    decimal_y = y1;
+    
+    decimal_xy_to_latlon( lat, lon );
     
 }
 Position::Position(double upperLeftLongitude, double upperLeftLatitude,
@@ -379,9 +394,24 @@ void Position::xy_to_latlon( double & out_lat, double & out_lon )
     
     out_lat += (latWidth / (2 * getHeight() ) );
     out_lon += (lonWidth / (2 * getWidth() ) );
-#ifdef DEBUG
-    assert( d_from_origin_to_pt > -EPSILON ); // non-negative
-#endif
+}
+
+void Position::decimal_xy_to_latlon( double & out_lat, double & out_lon )
+{
+    double d_from_origin_to_pt = resolution * sqrt( decimal_x*decimal_x + decimal_y*decimal_y );
+    double bearing_between_pts;
+	
+    if( d_from_origin_to_pt == 0 )
+        bearing_between_pts = 0;
+    else
+        bearing_between_pts = 90 + (MY_RADIANS_TO_DEGREES * asin( y*resolution / d_from_origin_to_pt ));
+    
+    map_tools::calculate_point( top_left_lat, top_left_long,
+                               d_from_origin_to_pt, bearing_between_pts,
+                               out_lat, out_lon );
+    
+    out_lat += (latWidth / (2 * getHeight() ) );
+    out_lon += (lonWidth / (2 * getWidth() ) );
 }
 
 void Position::latLonToXY( int & out_x, int & out_y)
@@ -412,30 +442,9 @@ void Position::latLonToXY( int & out_x, int & out_y)
         bearing = fmod( bearing, MY_PI/2 );
     }
     
-#ifdef DEBUG
-    if( bearing > 0.001 )
-    {
-        cout << "That bearing of " << bearing << "is gonna break things!" << endl;
-        cout << "Your point was (" << lat << ", " << lon << ")" << endl;
-    }
-    assert( bearing < 0.001 );
-    assert( bearing > -MY_PI/2 - 0.01 );
-#endif
-    out_x = (int)( (int)(cos( bearing ) * d_from_origin + 0.5) / resolution );
-    out_y = -(int)( (int)(sin( bearing ) * d_from_origin - 0.5) / resolution );
+    out_x = (int)( (int)(cos( bearing ) * d_from_origin  + 0.5) / resolution );
+    out_y = -(int)( (int)(sin( bearing ) * d_from_origin + 0.5) / resolution );
     
-#ifdef DEBUG
-    if( out_x >= w || out_y >= h )
-    {
-        cout << "You calculated (x, y) of (" << out_x << ", " << out_y << ") from bearing " << endl;
-        cout << bearing*MY_RADIANS_TO_DEGREES << " and dist from origin " << d_from_origin << endl;
-        cout << "Does this surprise you? Your origin is " << top_left_lat << ", " << top_left_long << endl;
-    }
-    assert( out_x < w );
-    assert( out_y < h );
-    assert( out_x >= 0 );
-    assert( out_y >= 0 );
-#endif
 }
 
 void Position::lat_lon_to_decimal_xy( double & out_x, double & out_y)

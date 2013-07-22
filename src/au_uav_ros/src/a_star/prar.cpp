@@ -27,6 +27,8 @@ waypointPath fitWaypointsToFullPath(std::queue<point> fullPath, double startLat,
 waypointPath astarPlaneToDestination(std::map<int, DiscretizedPlane> *discretePlanes, int planeID);
 waypointPath findLocalAstarPath(std::map<int, DiscretizedPlane> *discretePlanes, int planeID, int currentWaypointIndex, int lastWaypointTime, int collisionTime);
 
+bool backwards = false;
+
 
 /* path planning to next destination only methods
  */
@@ -48,40 +50,59 @@ std::map<int, map_tools::waypointPath> getAStarPath(std::map<int, au_uav_ros::Pl
 		allPlanesPaths[i] = astarPlaneToDestination(&discretePlanes, i);
 		std::cout << "Finished planning for plane: " << i << "\n";
 	}
+
+//	for (int i = 0; i < 60; i++) {
+//		for (int j = 0; j < 60; j++) {
+//			Position temp2 = Position(gridVals, i, j);
+//			Position temp1 = Position(gridVals, temp2.getLat(), temp2.getLon());
+//			cout << i << " " << j << "-----------------\n";
+//			cout << std::fixed << "\nDec X " << temp2.getDecimalX() << " " << temp2.getDecimalY() << "\n";
+//			cout << std::fixed << temp2.getLat() << " " << temp2.getLon() << " " << temp2.getX() << " " << temp2.getY() << "\n";
+//			cout << std::fixed << "\nDec X " << temp1.getDecimalX() << " " << temp1.getDecimalY() << "\n";
+//			cout << std::fixed << temp1.getLat() << " " << temp1.getLon() << " " << temp1.getX() << " " << temp1.getY() << "\n";
+//		}
+//	}
 	return allPlanesPaths;
 }
 
 // This plans the path for a single plane to the next destination
 waypointPath astarPlaneToDestination(std::map<int, DiscretizedPlane> *discretePlanes, int planeID) {
 	int startx = (*discretePlanes)[planeID].getLocation().getX();
-	int starty = (*discretePlanes)[planeID].getLocation().getY();
+	int starty = (*discretePlanes)[planeID].getLocation().getY() + 1;
 	int endx = (*discretePlanes)[planeID].getDestination().getX();
-	int endy = (*discretePlanes)[planeID].getDestination().getY();
+	int endy = (*discretePlanes)[planeID].getDestination().getY() + 1;
 	map_tools::bearing_t bearingNamed = map_tools::name_bearing((*discretePlanes)[planeID].getBearing());
+
+	// Get gridVal that centers the plane's location in a grid. Save these values to reset at the end of this function
+	Position temp = (*discretePlanes)[planeID].getLocation();
+	double upperLeftSaved = gridVals.upperLeftLatitude;
+	double upperLeftLonSaved = gridVals.upperLeftLongitude;
+	gridVals.upperLeftLatitude = gridVals.upperLeftLatitude + gridVals.resolution * (0.5 - (temp.getDecimalY() - temp.getY())) / 111111.0;
+	gridVals.upperLeftLongitude = gridVals.upperLeftLongitude - gridVals.resolution * (0.5 - (temp.getDecimalX() - temp.getX())) / (111111.0 * cos(temp.getLat()));
+	Position currentSaved = (*discretePlanes)[planeID].getLocation();
+	(*discretePlanes)[planeID].virtual_update_current(Position(gridVals, 0, 0));
+	temp = (*discretePlanes)[planeID].getLocation();
+	
+
 	//TODO hardcode time values. Telling it to generate DangerGrid for planes between 0 and 50 seconds. Then danger grid adds another 50 seconds so we have 100 seconds
 	// worth of danger grids for all the plane's from. This should hopefully be enough. Could decrease if speed matters, and all the planes never take longer than 100
 	// seconds to reach their destinations
 	DangerGrid bc = DangerGrid(discretePlanes, planeID, 0, 50, gridVals);
-
 	std::queue<point> fullPath = astar_point(&bc, startx, starty, endx, endy, planeID, bearingNamed, discretePlanes, gridVals);
 
 	// generates full waypoint path from A* queue
-	double decimalXPadding = (*discretePlanes)[planeID].getLocation().getDecimalX() - startx;
-	double decimalYPadding = (*discretePlanes)[planeID].getLocation().getDecimalY() - starty;
-	cout << decimalXPadding << " " << decimalYPadding << "\n";
-
 	waypointPath legPath;
 	legPath.startWaypointIndex = -1;
 	Position pos = Position(gridVals, 0, 0);
-	// if (!fullPath.empty()) {
-	// 	fullPath.pop();
-	// }
-	// if (!fullPath.empty()) {
-	// 	fullPath.pop();
-	// }
+	if (!fullPath.empty()) {
+		fullPath.pop();
+	}
+	if (!fullPath.empty()) {
+		fullPath.pop();
+	}
 	while (!fullPath.empty()) {
 		point nextPoint = fullPath.front();
-		pos.setXY(nextPoint.x + decimalXPadding, nextPoint.y + decimalYPadding);
+		pos.setXY(nextPoint.x, nextPoint.y + 1);
 		au_uav_ros::waypoint nextWay;
 		nextWay.latitude = pos.getLat();
 		nextWay.longitude = pos.getLon();
@@ -92,15 +113,10 @@ waypointPath astarPlaneToDestination(std::map<int, DiscretizedPlane> *discretePl
 	(*discretePlanes)[planeID].addAvoidancePath(legPath);
 	(*discretePlanes)[planeID].moveThroughTime((*discretePlanes)[planeID].getBearing(), false);
 
-	// // md
-	// legPath.pathWaypoints.clear();
-	// vector<Position> *positions = (*discretePlanes)[planeID].getLocationsThroughTime(); 
-	// for (int i = 0; i < positions->size(); i++) {
-	// 	au_uav_ros::waypoint nextPos;
-	// 	nextPos.latitude = (*positions)[i].getLat();
-	// 	nextPos.longitude = (*positions)[i].getLon();
-	// 	legPath.pathWaypoints.push_back(nextPos);
-	// }
+	// change back gridVals to original
+	gridVals.upperLeftLatitude = upperLeftSaved;
+	gridVals.upperLeftLongitude = upperLeftLonSaved;
+	(*discretePlanes)[planeID].virtual_update_current(currentSaved);
 
 	return legPath;
 }
@@ -128,6 +144,37 @@ std::map<int, std::vector<waypointPath> > * getAvoidancePlan(std::map< int, au_u
 		std::cout << "Finished planning for plane: " << i << "\n";
 	}
 	
+	// Stuff to quickly test Position
+
+//	std::vector<Position> *locations = discretePlanes[planeID].getLocationsThroughTime();
+//	for (int i = 0; i < 50; i++) {
+//		Position temp = (*locations)[i];
+//		double upperLeftSaved = gridVals.upperLeftLatitude;
+//		double upperLeftLonSaved = gridVals.upperLeftLongitude;
+//		gridVals.upperLeftLatitude = gridVals.upperLeftLatitude + gridVals.resolution * (0.5 - (temp.getDecimalY() - temp.getY())) / 111111.0;
+//		gridVals.upperLeftLongitude = gridVals.upperLeftLongitude - gridVals.resolution * (0.5 - (temp.getDecimalX() - temp.getX())) / (111111.0 * cos(temp.getLat()));
+//
+//		Position temp2 = Position(gridVals, temp.getLat(), temp.getLon());
+//		cout.precision(10);
+//		cout << i << "\n\n";
+//		cout << std::fixed << "Old X " << temp.getX() << " old Y " << temp.getY() << "\n";
+//		cout << std::fixed << "Old Dec X " << temp.getDecimalX() << " old Y " << temp.getDecimalY() << "\n";
+//		cout << std::fixed << "New X " << temp2.getX() << " new Y " << temp2.getY() << "\n";
+//		cout << std::fixed << "New Dec X " << temp2.getDecimalX() << " new Y " << temp2.getDecimalY() << "\n";
+//		gridVals.upperLeftLatitude = upperLeftSaved;
+//		gridVals.upperLeftLongitude = upperLeftLonSaved;
+//	}
+//	//double tempLat = gridVals.upperLeftLatitude - (10 * 1.5) / 111319.5;
+//	//double tempLon = gridVals.upperLeftLongitude + (10 * 2.5) / (111319.5 * cos(tempLat));
+//	//Position temp = Position(gridVals, tempLat, tempLon);
+//	//double tempLat = temp.getLat() + gridVals.resolution * (0.5 - (temp.getDecimalY() - temp.getY())) / 111111.0;
+//	//double tempLon = temp.getLon() - gridVals.resolution * (0.5 - (temp.getDecimalX() - temp.getX())) / (111111.0 * cos(temp.getLat()));
+//	Position temp2 = Position(gridVals, 16, 60);
+//	Position temp1 = Position(gridVals, temp2.getLat(), temp2.getLon());
+//	cout << std::fixed << "\nDec X " << temp2.getDecimalX() << " " << temp2.getDecimalY() << "\n";
+//	cout << std::fixed << temp2.getLat() << " " << temp2.getLon() << " " << temp2.getX() << " " << temp2.getY() << "\n";
+//	cout << std::fixed << "\nDec X " << temp1.getDecimalX() << " " << temp1.getDecimalY() << "\n";
+//	cout << std::fixed << temp1.getLat() << " " << temp1.getLon() << " " << temp1.getX() << " " << temp1.getY() << "\n";
 
 	return allPlanesPaths;
 }
@@ -152,7 +199,7 @@ std::vector<waypointPath> astarPathPlan(std::map<int, DiscretizedPlane> *discret
 				std::vector<Position> *otherPlaneLocs = it->second.getLocationsThroughTime();
 				if (i < (*otherPlaneLocs).size() && map_tools::calculate_distance_between_points(
 							(*otherPlaneLocs)[i].getLat(), (*otherPlaneLocs)[i].getLon(), 
-							(*locations)[i].getLat(), (*locations)[i].getLon(), "meters") < 12)
+							(*locations)[i].getLat(), (*locations)[i].getLon(), "meters") < 24)
 				{
 					std::cout << "Actually found a collision at time: " << i << "\n";
 					waypointPath cFreePath = findLocalAstarPath(discretePlanes, planeID, numWaypoints, lastWaypointTime, i);
@@ -162,11 +209,16 @@ std::vector<waypointPath> astarPathPlan(std::map<int, DiscretizedPlane> *discret
 					locations = (*discretePlanes)[planeID].getLocationsThroughTime();
 					// get to the next waypoint time
 					for (int j = i + 1; j < locations->size(); j++) {
-						if ((*locations)[i].getIsWaypoint()) {
-							i = j;
+						if ((*locations)[j].getIsWaypoint()) {
+							// so that next loop sees the waypoint and increments numWaypoints
+							i = j-1;
 							break;
 						}
 					}
+					// break out of for loop of plane's because we only want to plan one path.
+					// in fact, the function in coordinator and discretized plane will be screwed up
+					// if there are more than one waypoint paths for each plane
+					break;
 				}
 			}
 		}
@@ -175,10 +227,20 @@ std::vector<waypointPath> astarPathPlan(std::map<int, DiscretizedPlane> *discret
 }
 
 waypointPath findLocalAstarPath(std::map<int, DiscretizedPlane> *discretePlanes, int planeID, int currentWaypointIndex, int lastWaypointTime, int collisionTime) {
-	// get initial things for A* TODO could change this awful parameter list
 	std::vector<Position> *locations = (*discretePlanes)[planeID].getLocationsThroughTime();
+
+	// Get gridVal that centers the plane's location in a grid. Save these values to reset at the end of this function
+	Position temp = (*locations)[lastWaypointTime];
+	double upperLeftSaved = gridVals.upperLeftLatitude;
+	double upperLeftLonSaved = gridVals.upperLeftLongitude;
+	gridVals.upperLeftLatitude = gridVals.upperLeftLatitude + gridVals.resolution * (0.5 - (temp.getDecimalY() - temp.getY())) / 111111.0;
+	gridVals.upperLeftLongitude = gridVals.upperLeftLongitude - gridVals.resolution * (0.5 - (temp.getDecimalX() - temp.getX())) / (111111.0 * cos(temp.getLat()));
+	Position currentSaved = (*discretePlanes)[planeID].getLocation();
+	(*discretePlanes)[planeID].virtual_update_current(Position(gridVals, 0, 0));
+
+	// get initial things for A* TODO could change this awful parameter list
 	int startx = (*locations)[lastWaypointTime].getX();
-	int starty = (*locations)[lastWaypointTime].getY();
+	int starty = (*locations)[lastWaypointTime].getY() + 1;
 	int endx, endy, endIndex = lastWaypointTime;
 	// find the next waypoint from the collision time onward
 	for (int i = lastWaypointTime + 1; i < locations->size(); i++) {
@@ -188,25 +250,36 @@ waypointPath findLocalAstarPath(std::map<int, DiscretizedPlane> *discretePlanes,
 		}
 	}
 	endx = (*locations)[endIndex].getX();
-	endy = (*locations)[endIndex].getY();
+	endy = (*locations)[endIndex].getY() + 1;
 	map_tools::bearing_t bearingNamed = map_tools::name_bearing((*locations)[lastWaypointTime].getBearing());
 	DangerGrid bc = DangerGrid(discretePlanes, planeID, lastWaypointTime, endIndex, gridVals);
 	// Finally actually call the A* code to find the path for this small leg of the full path
 	std::queue<point> fullPath = astar_point(&bc, startx, starty, endx, endy, planeID, bearingNamed, discretePlanes, gridVals);
-	
+
 	// this sections will return the full path, below will return a shortened path
 	waypointPath legPath;
 	legPath.startWaypointIndex = currentWaypointIndex;
 	Position pos = Position(gridVals, 0, 0);
+	if (!fullPath.empty()) {
+		fullPath.pop();
+	}
+
 	while (!fullPath.empty()) {
 		point nextPoint = fullPath.front();
-		pos.setXY(nextPoint.x, nextPoint.y);
+		pos.setXY(nextPoint.x, nextPoint.y + 1);
+		cout << nextPoint.x << " " << nextPoint.y << " " << pos.getDecimalX() << " " << pos.getDecimalY() << "\n";
 		au_uav_ros::waypoint nextWay;
 		nextWay.latitude = pos.getLat();
 		nextWay.longitude = pos.getLon();
 		legPath.pathWaypoints.push_back(nextWay);
 		fullPath.pop();
 	}
+
+	// change back gridVals to original
+	gridVals.upperLeftLatitude = upperLeftSaved;
+	gridVals.upperLeftLongitude = upperLeftLonSaved;
+	(*discretePlanes)[planeID].virtual_update_current(currentSaved);
+
 	return legPath;
 	//return fitWaypointsToFullPath(fullPath, (*locations)[lastWaypointTime].getLat(), (*locations)[lastWaypointTime].getLon(), currentWaypointIndex);
 }
@@ -294,7 +367,6 @@ void generateMapValuesFromWaypoints(map_tools::gridValues &gridValsOut, std::map
 	double upperLeftLon = 1000;
 	double bottomLeftLat = 1000;
 	double upperRightLon = -1000;
-
 	for (std::map<int, std::vector<au_uav_ros::waypoint> >::iterator it =allPlanesWaypoints->begin(); it != allPlanesWaypoints->end(); it++) {
 		//it->second is the vector of that plane's waypoints
 		for (int i = 0; i < it->second.size(); i++) {
@@ -326,6 +398,14 @@ void generateMapValuesFromWaypoints(map_tools::gridValues &gridValsOut, std::map
 	std::cout << gridVals.upperLeftLatitude << " " << gridVals.upperLeftLongitude << " " << gridVals.latitudeWidth << " " << gridVals.longitudeWidth << "\n";
 }
 
+void generateMapValuesToCenterPlane(map_tools::gridValues &gridValsOut, std::map<int, DiscretizedPlane> *discretePlanes, int planeID, int lastWaypointTime) {
+	std::vector<Position> *locations = (*discretePlanes)[planeID].getLocationsThroughTime();
+	Position temp = (*locations)[lastWaypointTime];
+	double upperLeftSaved = gridVals.upperLeftLatitude;
+	double upperLeftLonSaved = gridVals.upperLeftLongitude;
+	gridVals.upperLeftLatitude = gridVals.upperLeftLatitude + gridVals.resolution * (0.5 - (temp.getDecimalY() - temp.getY())) / 111111.0;
+	gridVals.upperLeftLongitude = gridVals.upperLeftLongitude - gridVals.resolution * (0.5 - (temp.getDecimalX() - temp.getX())) / (111111.0 * cos(temp.getLat()));
+}
 
 /* Methods to convert between PlaneObject map to DiscritizedPlane map
  */

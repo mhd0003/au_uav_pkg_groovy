@@ -9,7 +9,7 @@
 	<arg name="sim_freq" default="0.2" />
 	<param name="runSimFreq" value="$(arg sim_freq)" type="double" />
 
-	<arg name="planPath" default="true" />
+    <arg name="planPath" default="false" />
 	<param name="runPathPlanner" value="$(arg planPath)" type="bool" />
 	
 	<!-- To run centralized, do: -->
@@ -23,10 +23,10 @@
 	<arg name="XBeeIO" default="false" />
 	<!-- If GUI is not desired, do: -->
 	<!-- roslaunch au_uav_ros launch.launch GUI:=false-->
-	<arg name="GUI" default="true" />
+    <arg name="GUI" default="false" />
 	<!-- If rqt_console is not desired, do: -->
 	<!-- roslaunch au_uav_ros launch.launch view_log:=false-->
-	<arg name="view_log" default="true" />
+    <arg name="view_log" default="false" />
 	
 	<!-- XBeeIO nodes -->
 	<group if="$(arg XBeeIO)">
@@ -37,7 +37,7 @@
 	<!-- GUI nodes -->
 	<group if="$(arg GUI)">
 		<node name="guiInterfacer" pkg="au_uav_ros" type="guiInterfacer"/>
-		<node name="au_uav_gui" pkg="au_uav_gui" type="au_uav_gui" required="true"/>
+        <node name="au_uav_gui" pkg="au_uav_gui" type="au_uav_gui"/>
 	</group>
 	
 	<!-- rqt_console -->
@@ -48,5 +48,5 @@
 	<!-- Required nodes...  -->
 	<node name="coordinator" pkg="au_uav_ros" type="coordinator" />
 	<node name="simulator" pkg="au_uav_ros" type="simulator" />
-	<node name="evaluator" pkg="au_uav_ros" type="evaluator" />
+    <node name="evaluator" pkg="au_uav_ros" type="evaluator" required="true" />
 </launch>

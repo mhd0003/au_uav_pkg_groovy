@@ -1,6 +1,6 @@
 /*
 automator
-This is a program to automatically startup several tests for AU_UAV_ROS evaluator when the
+This is a program to automatically startup several tests for au_uav_ros evaluator when the
 inputs are enumerated in another .txt file.
 
 
@@ -72,7 +72,7 @@ bool isBlankLine(char str[])
 			}
 		}
 	}
-	
+
 	//we made it here, must be blank
 	return true;
 }
@@ -99,12 +99,12 @@ int main()
 	}
 
 
-    
+
 /* ************ FIRST RUN THE EVALUATOR ON ALL FILES ************** */
 
 
 	int defaultSleep = 0;
-	
+
 
 	//get the filename that has all the course files listed in it
 	//(each filename on its own line in plain text)
@@ -113,7 +113,7 @@ int main()
 	scanf("%s", filename);
 
 	switch(filename[0]){
-		case 'a': 
+		case 'a':
 			defaultSleep = 30;
 		case 'd':
 			defaultSleep = 30;
@@ -127,11 +127,11 @@ int main()
 
 	std::string inFile = std::string(filename);
 	inFile = INPUT_DIRECTORY + inFile;
-	
+
 	//open the file
 	FILE *fp;
 	//fp = fopen(filename, "r");
-	fp = fopen(inFile.c_str(),"r");	
+	fp = fopen(inFile.c_str(),"r");
 
 	//try to create our pipe for use later
 	int pfds[2];
@@ -147,7 +147,7 @@ int main()
 		perror("Pipe");
 		exit(1);
 	}*/
-	
+
 	int pid;
 	//check for a good open
 	if(fp != NULL)
@@ -155,34 +155,34 @@ int main()
 		char buffer[256];
 		//while we have something in the file
 		while(fgets(buffer, sizeof(buffer), fp))
-		{	
+		{
 			//check for useless lines
 			if(buffer[0] == '#' || isBlankLine(buffer))
 			{
 				//this line is a comment
 				continue;
 			}
-			
+
 			//construct our strings to send
 			std::string myStr = std::string(buffer);
 			myStr = myStr.substr(0, myStr.size() - LENGTH_OF_EXTENSION - 1);
 			//unsigned pos = myStr.find_first_of("_");//get the position of the first '_'
 			//myStr = myStr.substr(0,pos) + "/" +myStr;
 			myStr = myStr + OUTPUT_ADDITION;
-			
+
 			//fork our process
 			//int pid;
 			pid = fork();
-	
+
 			if(pid == 0)
 			{
 				//we're redirecting STDIN such that it comes from the pipe
 				//close standard in
 				close(STDIN_FILENO);
-		
+
 				//duplicate our stdin as the pipe output
 				dup2(pfds[0], STDIN_FILENO);
-				
+
 				//child process
 				system("roslaunch au_uav_ros evaluation.launch");
 
@@ -198,11 +198,11 @@ int main()
 
 				char time [20];
 				sprintf(time,"%d",SIMULATION_TIME);
-				//sprintf(time,"%d",simTime);	
+				//sprintf(time,"%d",simTime);
 
 				printf("Writing to the pipe! %s\n", time);
-				write(pfds[1], time, strlen(myStr.c_str()));	
-		
+				write(pfds[1], time, strlen(myStr.c_str()));
+
 				//parent waits some time, then kills before starting new one
 				sleep(defaultSleep);
 
@@ -224,7 +224,7 @@ int main()
 					if(dp==NULL){printf("\n\nERROR OPENING DONE FILE!! \n\n");}
 					fgets(buf,sizeof(buf),dp);
 					fclose(dp);
-					
+
 					if(buf[0]=='y'){
 						dp = fopen(DONE_FILE_FULL,"w");
 						printf("WRITEING TO DONE FILE");
@@ -238,7 +238,7 @@ int main()
 						notDone = false;
 						break;
 					}
-					
+
 				}//notDone
 		*/
 
@@ -254,7 +254,7 @@ int main()
 				sleep(BUFFER_TIME);
 			}
 		}//while
-		
+
 		fclose(fp);
 	}//if fp!= null
 	else
@@ -262,14 +262,14 @@ int main()
 		printf("ERROR: Bad file name\n");
 	}
 
-	
+
 
 
 
 /* ******************  NOW THE SCORE SHEET ANALYSIS ******************* */
-	
-	//char yn = 'y';	
-	//std::string input;	
+
+	//char yn = 'y';
+	//std::string input;
 	//std::cout << "Calculate stats?[y/n]: ";
 	//std::getline(std::cin, input);
 	//std::cin >> input;
@@ -277,25 +277,28 @@ int main()
 
 	if(true){ //dont prompt for now, just DO IT.
 
-		
+
 
 		/*there is a file, similar to the one with all the course files
-		 that lists all score files. The name is generated in the 
-		 evaluator, by replacing '.txt' with '_scores.txt' in the 
+		 that lists all score files. The name is generated in the
+		 evaluator, by replacing '.txt' with '_scores.txt' in the
 		 filename that lists all the course files. */
 
 		std::string allScores = std::string(filename);//filename has the name of the course list file
 		int pos = allScores.find_first_of(".");
 		allScores = allScores.substr(0,pos);	//get rid of the .txt extension
 		allScores = allScores + ALL_SCORES_EXTENSION; //now we have the correct name
-	
+
 		FILE * allScoresFP;
 		allScoresFP = fopen((SCORES_DIRECTORY+allScores).c_str(),"r"); //open the score list file
 
-		if(allScoresFP==NULL){printf("BAD SCORE FILE\n");}
+		if(allScoresFP==NULL) {
+			printf("BAD SCORE FILE\n");
+			std::cout << "Tried to load" << SCORES_DIRECTORY << allScores << std::endl;
+		}
 		else{
 
-			/*here  we go through each score file in turn, reading and parsing just the 
+			/*here  we go through each score file in turn, reading and parsing just the
 			 first line. The evaluator makes the score files, and places the data we need on
  			 the first line, each number separted by a space.The format is
 
@@ -304,7 +307,7 @@ int main()
 			FILE *scoreFP;
 			char numbers[256];
 			int numConflicts=0;
-			int numCollisions=0;	
+			int numCollisions=0;
 			double totalActualDist=0.0;
 			double totalMinDist=0.0;
 			int numAvoids = 0;
@@ -315,18 +318,18 @@ int main()
 
 			//while we have a score file in the list
 			while(fgets(buffer, sizeof(buffer), allScoresFP)){  //fgets stops at a newline or size or eof
-	
+
 				//check for useless lines
 				if(buffer[0] == '#' || isBlankLine(buffer))
 				{
 				//this line is a comment
 					continue;
 				}
-	
 
-				
+
+
 				std::string myStr = std::string(buffer);//the name of a score file
-				
+
 				myStr = myStr.substr(0,myStr.size()-1);//get rid of the newline
 				scoreFP = fopen((SCORES_DIRECTORY + myStr).c_str(),"r");//open the single score file
 
@@ -334,11 +337,11 @@ int main()
 
 				else{
 					numFiles++; //count of the number of score files
-				
+
 					fgets(numbers,sizeof(numbers),scoreFP);//get the first line of the score file
-				
+
 					allNums = (numbers);//put the first line in a c++ string for easy parsing
-				
+
 
 					/*now get each number from the line
 					 just get posistion of the first space,
@@ -348,7 +351,7 @@ int main()
 					pos = allNums.find_first_of(" ");
 					numConflicts += atoi(allNums.substr(0,pos).c_str());
 					allNums = allNums.substr(pos+1);
-							
+
 					pos = allNums.find_first_of(" ");
 					numCollisions += atoi(allNums.substr(0,pos).c_str());
 					allNums = allNums.substr(pos+1);
@@ -356,7 +359,7 @@ int main()
 					pos = allNums.find_first_of(" ");
 					totalActualDist += atof(allNums.substr(0,pos).c_str());
 					allNums = allNums.substr(pos+1);
-				
+
 					pos = allNums.find_first_of(" ");
 					totalMinDist += atof(allNums.substr(0,pos).c_str());
 					allNums = allNums.substr(pos+1);
@@ -368,9 +371,9 @@ int main()
 					fclose(scoreFP);
 				}//else  - single score file opened
 
-			}//while there is another score file	
+			}//while there is another score file
 
-			fclose(allScoresFP);//close the score list file			
+			fclose(allScoresFP);//close the score list file
 
 
 	/* now we average everything out and write it out to a file*/
@@ -400,7 +403,7 @@ int main()
 			pos = data.find_first_of(".");
 			data = data.substr(0,pos);	//get rid of the .txt extension
 			data = data + DATA_EXTENSION;
-			
+
 			FILE * dataFP;
 			dataFP = fopen((DATA_DIRECTORY + data).c_str(),"w");
 

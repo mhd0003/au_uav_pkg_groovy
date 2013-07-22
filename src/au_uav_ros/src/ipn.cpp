@@ -1,31 +1,20 @@
 #include "au_uav_ros/ipn.h"
 using namespace au_uav_ros;
 
-// Print greatest threat
-#define IPN_PRINT_DEBUG_0 false
-// Print each threat's info
-#define IPN_PRINT_DEBUG_1 false
-// Print each threat's info as ripna.cpp would calculate it
-#define IPN_PRINT_RIPNA_1 false
-// Print turning info
-#define IPN_PRINT_DEBUG_2 false
-// Print turning info as ripna.cpp would calculate it
-#define IPN_PRINT_RIPNA_2 false
-// Print waypoint info
-#define IPN_PRINT_DEBUG_3 false
-// Print waypoint info as ripna.cpp would calculate it
-#define IPN_PRINT_RIPNA_3 false
-
 #define MAXIMUM_TURNING_ANGLE 22.5 //degrees
 
-/* Convert coordinate to waypoint */
-waypoint getWaypoint(coordinate _coordinate) {
-	waypoint wp;
-	wp.latitude = _coordinate.latitude;
-	wp.longitude = _coordinate.longitude;
-	wp.altitude = _coordinate.altitude;
 
-	return wp;
+Vector2D ipn::getSeparationVector(const PlaneObject &plane1, const PlaneObject &plane2) {
+    return Vector2D(plane1.getCurrentLoc(), plane2.getCurrentLoc());
+}
+
+Vector2D ipn::getDirectionVector(const PlaneObject &plane1, const PlaneObject &plane2) {
+    Vector2D d_1(cos(plane1.getCurrentBearing()*DEGREES_TO_RADIANS),
+        sin(plane1.getCurrentBearing()*DEGREES_TO_RADIANS));
+    Vector2D d_2(cos(plane2.getCurrentBearing()*DEGREES_TO_RADIANS),
+        sin(plane2.getCurrentBearing()*DEGREES_TO_RADIANS));
+
+    return d_1 - d_2;
 }
 
 /*
@@ -34,291 +23,150 @@ waypoint getWaypoint(coordinate _coordinate) {
 * (3) Generate avoidance waypoint
 */
 bool ipn::checkForThreats(SimPlaneObject &thisPlane, std::map<int, PlaneObject> &allPlanes, waypoint &avoidanceWP) {
-	if (IPN_PRINT_DEBUG_0) {
-		ROS_INFO("Checking for threats to plane #%i...", thisPlane.getID());
-	}
+    // md
+    // TODO: Lower the threshold if path planning active
+    /* Set threshold values for this plane's speed */
+    SEPARATION_THRESHOLD = thisPlane.getSpeed() * 10.0;
+    ZEM_THRESHOLD = thisPlane.getSpeed() * 3.5;
 
-	// md	
-	// TODO: Lower the threshold if path planning active
-	/* Set threshold values for this plane's speed */
-	SEPARATION_THRESHOLD = thisPlane.getSpeed() * 10.0;
-	ZEM_THRESHOLD = thisPlane.getSpeed() * 3.5;
+    std::vector<threatInfo> allThreats;
 
-	std::vector<threatInfo> allThreats;
-	allThreats.resize(allPlanes.size());
+    /* (1) Get threat info for all planes */
+    std::map<int, PlaneObject>::iterator it;
+    for (it = allPlanes.begin(); it != allPlanes.end(); it++) {
+        if (thisPlane.getID() == it->second.getID()) {
+            // Don't process yourself
+            continue;
+        }
 
-	/* (1) Get threat info for all planes */
-	std::map<int, PlaneObject>::iterator it;
-	for (it = allPlanes.begin(); it != allPlanes.end(); it++) {
-		allThreats[it->first] = getThreatInfo(thisPlane, it->second);
-	}
+        allThreats.push_back(getThreatInfo(thisPlane, it->second));
+    }
 
-	/* (2) Determine greatest threat */
-	threatInfo* greatestThreat = findGreatestThreat(allThreats);
-	if (greatestThreat == NULL) {
-		if (IPN_PRINT_DEBUG_0) {
-			ROS_INFO("Plane #%i - no greatest threat", thisPlane.getID());
-		}
-		if (IPN_PRINT_DEBUG_0) {
-			threatContainer tC = findGreatestThreat(thisPlane, allPlanes);
-			if (tC.planeID >= 0) {
-				ROS_ERROR("ripna disagrees. Greatest threat should be #%d", tC.planeID);
-				ROS_ERROR("for that plane, I had t_go %f and ZEM %f", allThreats[tC.planeID].t_go, allThreats[tC.planeID].ZEM);
-				ROS_ERROR("it had t_go %f and ZEM %f", tC.timeToGo, tC.ZEM);
-			}
-		}
-		return false;
-	} else {
-		if (IPN_PRINT_DEBUG_0) {
-			ROS_WARN("Plane #%i - greatest threat is #%i",
-				thisPlane.getID(), greatestThreat->threatPlane->getID());
-		}
-		if (IPN_PRINT_DEBUG_0) {
-			threatContainer tC = findGreatestThreat(thisPlane, allPlanes);
-			if (tC.planeID != greatestThreat->threatPlane->getID() && tC.planeID >= 0) {
-				ROS_ERROR("ripna disagrees. Greatest threat should be #%d", tC.planeID);
-				ROS_ERROR("for that plane, I had t_go %f and ZEM %f", allThreats[tC.planeID].t_go, allThreats[tC.planeID].ZEM);
-				ROS_ERROR("it had t_go %f and ZEM %f", tC.timeToGo, tC.ZEM);
-				ROS_ERROR("my greatest threat was #%d, with t_go %f and ZEM %f", greatestThreat->threatPlane->getID(), greatestThreat->t_go, greatestThreat->ZEM);
-			}
-		}
+    /* (2) Determine greatest threat */
+    threatInfo* greatestThreat = findGreatestThreat(allThreats);
 
-		/* (3) Generate avoidance waypoint */
-		avoidanceWP = createAvoidanceWaypoint(thisPlane, *greatestThreat);
-		avoidanceWP.planeID = thisPlane.getID();
+    if (greatestThreat == NULL) {
+        return false;
+    }
 
-		return true;
-	}
-	
-	return false;
+    /* (3) Generate avoidance waypoint */
+    avoidanceWP = createAvoidanceWaypoint(thisPlane, *greatestThreat);
+    avoidanceWP.planeID = thisPlane.getID();
+
+    return true;
 }
 
 /* Return a container with info used to determine threat danger */
 ipn::threatInfo ipn::getThreatInfo(SimPlaneObject &thisPlane, PlaneObject &otherPlane) {
-	Vector2D separation, direction;
-	double separationDistance, t_go, ZEM;
-	separationDistance = distanceBetween(thisPlane.getCurrentLoc(), otherPlane.getCurrentLoc());
+    double separationDistance, t_go, ZEM;
 
-	if (separationDistance > 0 && separationDistance < SEPARATION_THRESHOLD) {
-		Vector2D d_1(cos(thisPlane.getCurrentBearing()*DEGREES_TO_RADIANS),
-			sin(thisPlane.getCurrentBearing()*DEGREES_TO_RADIANS));
-		Vector2D d_2(cos(otherPlane.getCurrentBearing()*DEGREES_TO_RADIANS),
-			sin(otherPlane.getCurrentBearing()*DEGREES_TO_RADIANS));
+    Vector2D displacement = getSeparationVector(thisPlane, otherPlane);
+    Vector2D direction = getDirectionVector(thisPlane, otherPlane);
 
-		separation = Vector2D(thisPlane.getCurrentLoc(), otherPlane.getCurrentLoc());
-		direction = d_1 - d_2;
+    separationDistance = displacement.getMagnitude();
 
-		t_go = -1.0 * separation.dot(direction)
-			/ (thisPlane.getSpeed() * direction.dot(direction));
-		ZEM = sqrt( separationDistance*separationDistance
-			+ 2*thisPlane.getSpeed()*t_go*separation.dot(direction)
-			+ pow(thisPlane.getSpeed()*t_go, 2)*direction.dot(direction) );
+    if (separationDistance > 0 && separationDistance < SEPARATION_THRESHOLD) {
+        t_go = -1.0 * displacement.dot(direction)
+            / (thisPlane.getSpeed() * direction.dot(direction));
+        ZEM = sqrt( displacement.dot(displacement)
+            + 2*thisPlane.getSpeed()*t_go*displacement.dot(direction)
+            + pow(thisPlane.getSpeed()*t_go, 2)*direction.dot(direction) );
 
-		if (IPN_PRINT_RIPNA_1) {
-			coordinate origin;
-			origin.latitude = 32.606573;
-			origin.longitude = -85.490356;
-			origin.altitude = 400;
-			double magnitude, angle;
-			magnitude = findDistance(origin.latitude, origin.longitude, 
-				thisPlane.getCurrentLoc().latitude, thisPlane.getCurrentLoc().longitude);
-			angle = findAngle(origin.latitude, origin.longitude, 
-				thisPlane.getCurrentLoc().latitude, thisPlane.getCurrentLoc().longitude);
-			mathVector p1(magnitude,angle);
-			magnitude = findDistance(origin.latitude, origin.longitude, 
-				otherPlane.getCurrentLoc().latitude, otherPlane.getCurrentLoc().longitude);
-			angle = findAngle(origin.latitude, origin.longitude, 
-				otherPlane.getCurrentLoc().latitude, otherPlane.getCurrentLoc().longitude);
-			mathVector p2(magnitude,angle);
-			mathVector d1(1.0,thisPlane.getCurrentBearing());
-			mathVector d2(1.0,otherPlane.getCurrentBearing());
-			mathVector pDiff = p1-p2;
-			mathVector dDiff = d1-d2;
+    } else {
+        t_go = std::numeric_limits<double>::max();
+        ZEM = std::numeric_limits<double>::max();
+    }
 
-			double ripna_t_go = -1*pDiff.dotProduct(dDiff)/(thisPlane.getSpeed()*dDiff.dotProduct(dDiff));
-			double ripna_ZEM = sqrt(pDiff.dotProduct(pDiff) + 
-							2*(thisPlane.getSpeed()*t_go)*pDiff.dotProduct(dDiff) + 
-							pow(thisPlane.getSpeed()*t_go,2)*dDiff.dotProduct(dDiff));
-			
-			// ROS_INFO("My t_go: %f. ripna t_go: %f", t_go, ripna_t_go);
-			// ROS_INFO("My ZEM: %f. ripna ZEM: %f", ZEM, ripna_ZEM);
+    if (separationDistance > 0 && separationDistance < COLLISION_THRESHOLD) {
+        ROS_ERROR("Distance between #%d and %d is: %f",
+            thisPlane.getID(), otherPlane.getID(), separationDistance);
+    }
 
-			// ROS_INFO("t_go diff: %f, ZEM diff: %f", fabs(t_go-ripna_t_go), fabs(ZEM-ripna_ZEM));
+    threatInfo threat;
+    threat.threatPlane = &otherPlane;
+    threat.displacement = displacement;
+    threat.direction = direction;
+    threat.separationDistance = separationDistance;
+    threat.t_go = t_go;
+    threat.ZEM = ZEM;
 
-			// ROS_INFO("separation magnitude: %f, pDiff magnitude: %f", separation.getMagnitude(), pDiff.getMagnitude());
-			// ROS_INFO("direction magnitude: %f, dDiff magnitude: %f", direction.getMagnitude(), dDiff.getMagnitude());
-
-			// ROS_INFO("separation angle: %f, pDiff direction: %f", separation.getAngle(), pDiff.getDirection());
-			// ROS_INFO("direction angle: %f, dDiff direction: %f", direction.getAngle(), dDiff.getDirection());
-
-			// ROS_INFO("position magnitude diff: %f", fabs(separation.getMagnitude() - pDiff.getMagnitude()));
-			// ROS_INFO("position angle diff: %f", fabs(separation.getAngle() - pDiff.getDirection()));
-
-			// ROS_INFO("direction magnitude diff: %f", fabs(direction.getMagnitude() - dDiff.getMagnitude()));
-			// ROS_INFO("direction angle diff: %f", fabs(direction.getAngle() - dDiff.getDirection()));
-
-			// ROS_INFO("position x diff: %f", fabs(separation.getX() -
-			// 	pDiff.getMagnitude()*cos(pDiff.getDirection()*DEGREES_TO_RADIANS)));
-			// ROS_INFO("position y diff: %f", fabs(separation.getY() -
-			// 	pDiff.getMagnitude()*sin(pDiff.getDirection()*DEGREES_TO_RADIANS)));
-
-			// ROS_INFO("actual to V2D: %f", fabs(separationDistance - separation.getMagnitude()));
-			// ROS_INFO("actual to ripna: %f", fabs(separationDistance - pDiff.getMagnitude()));
-		}
-
-	} else {
-		t_go = std::numeric_limits<double>::max();
-		ZEM = std::numeric_limits<double>::max();
-	}
-
-	if (separationDistance > 0 && separationDistance < COLLISION_THRESHOLD) {
-		ROS_ERROR("Distance between #%d and %d is: %f",
-			thisPlane.getID(), otherPlane.getID(), separationDistance);
-	}
-
-	threatInfo threat;
-	threat.threatPlane = &otherPlane;
-	threat.separationV = separation;
-	threat.directionV = direction;
-	threat.separationDistance = separationDistance;
-	threat.t_go = t_go;
-	threat.ZEM = ZEM;
-
-	return threat;
+    return threat;
 }
 
-			Vector2D separationV, directionV;
-			double separationDistance, t_go, ZEM;
 /* Return pointer to threat with greatest danger of collision */
 /* Returns NULL if none of the threats need avoidance */
 ipn::threatInfo* ipn::findGreatestThreat(std::vector<ipn::threatInfo> &allThreats) {
-	if (IPN_PRINT_DEBUG_1) {
-		ROS_INFO("Going through threats...");
-	}
+    int i;
+    double t_go, ZEM;
+    int size = allThreats.size();
+    threatInfo* greatestThreat = NULL;
 
-	int i;
-	double t_go, ZEM;
-	int size = allThreats.size();
-	threatInfo* greatestThreat = NULL;
+    for (i = 0; i < size; i++) {
+        t_go = allThreats[i].t_go;
+        ZEM = allThreats[i].ZEM;
 
-	for (i = 0; i < size; i++) {
-		t_go = allThreats[i].t_go;
-		ZEM = allThreats[i].ZEM;
+        if (ZEM < 0 || t_go < 0 || ZEM > ZEM_THRESHOLD) {
+            continue;
+        }
 
-		if (IPN_PRINT_DEBUG_1 && allThreats[i].separationDistance > 0) {
-			ROS_INFO("Plane #%i - %f meters away, t_go = %f, ZEM = %f", 
-				allThreats[i].threatPlane->getID(), allThreats[i].separationDistance, t_go, ZEM);
-			ROS_INFO("t_go threshold: %f, ZEM threshold: %f",T_GO_THRESHOLD, ZEM_THRESHOLD);
-		}
+        if (greatestThreat == NULL) {
+            greatestThreat = &allThreats[i];
+        } else if (ZEM <= CONFLICT_THRESHOLD) {
+            if (greatestThreat->ZEM <= CONFLICT_THRESHOLD) {
+                if (t_go < greatestThreat->t_go || ZEM < greatestThreat->ZEM) {
+                    greatestThreat = &allThreats[i];
+                }
+            } else {
+                greatestThreat = &allThreats[i];
+            }
+        } else if (t_go < greatestThreat->t_go && greatestThreat->ZEM > CONFLICT_THRESHOLD) {
+            greatestThreat = &allThreats[i];
+        }
+    }
 
-		if (ZEM < 0 || t_go < 0 || ZEM > ZEM_THRESHOLD) {
-			continue;
-		}
-
-		// if (fabs( allThreats[i].separationV.getAngle() - thisPlane.getCurrentBearing()) > 67.5) {
-		// 	if (IPN_PRINT_DEBUG_1) {
-		// 		ROS_WARN("Plane #%i - %f meters away, t_go = %f, ZEM = %f", 
-		// 			allThreats[i].threatPlane->getID(), allThreats[i].separationDistance, t_go, ZEM);
-		// 		ROS_WARN("t_go threshold: %f, ZEM threshold: %f",T_GO_THRESHOLD, ZEM_THRESHOLD);
-		// 		ROS_WARN("Skipping because separation angle is: %f", allThreats[i].separationV.getAngle());
-		// 	}
-
-		// 	continue;
-		// }
-
-		if (greatestThreat == NULL) {
-			greatestThreat = &allThreats[i];
-		} else if (ZEM <= CONFLICT_THRESHOLD) {
-			if (greatestThreat->ZEM <= CONFLICT_THRESHOLD) {
-				if (t_go < greatestThreat->t_go || ZEM < greatestThreat->ZEM) {
-					greatestThreat = &allThreats[i];
-				}
-			} else {
-				greatestThreat = &allThreats[i];
-			}
-		} else if (t_go < greatestThreat->t_go && greatestThreat->ZEM > CONFLICT_THRESHOLD) {
-			greatestThreat = &allThreats[i];
-		}
-	}
-
-	return greatestThreat;
+    return greatestThreat;
 }
 
 /*  */
 bool ipn::shouldTurnRight(SimPlaneObject &thisPlane, threatInfo &threat) {
-	bool turnRight;
+    bool turnRight;
 
-	double thisPlaneBearing = thisPlane.getCurrentBearing();
-	double threatPlaneBearing = threat.threatPlane->getCurrentBearing();
+    double thisPlaneBearing = thisPlane.getCurrentBearing();
+    double threatPlaneBearing = threat.threatPlane->getCurrentBearing();
 
-	double LOS_angle = threat.separationV.getAngle();
-	double theta_1 = LOS_angle - thisPlaneBearing;
-	double theta_2 = LOS_angle - threatPlaneBearing;
+    double LOS_angle = threat.displacement.getAngle();
+    double theta_1 = LOS_angle - thisPlaneBearing;
+    double theta_2 = LOS_angle - threatPlaneBearing;
 
-	// double temp = cos((thisPlaneBearing - threatPlaneBearing)*DEGREES_TO_RADIANS);
-	// if (fabs(temp) >= 0.5) {
-	// 	turnRight = (theta_1 < theta_2);
-	// } else {
-	// 	turnRight = !(theta_1 < theta_2);
-	// }
+/*
+    double temp = cos((thisPlaneBearing - threatPlaneBearing)*DEGREES_TO_RADIANS);
+    if (fabs(temp) >= 0.5) {
+     turnRight = (theta_1 < theta_2);
+    } else {
+     turnRight = !(theta_1 < theta_2);
+    }
+*/
 
-	turnRight = (sin(theta_2*DEGREES_TO_RADIANS) - sin(theta_1*DEGREES_TO_RADIANS)) >= 0;
+    turnRight = (sin(theta_2*DEGREES_TO_RADIANS) - sin(theta_1*DEGREES_TO_RADIANS)) >= 0;
 
-	if (IPN_PRINT_DEBUG_2)
-	{
-		ROS_INFO("LOS angle is %f", LOS_angle);
-		ROS_INFO("Theta 1 is %f", theta_1);
-		ROS_INFO("Theta 2 is %f", theta_2);
-	}
-
-	if (IPN_PRINT_RIPNA_2) {
-		if (turnRight) ROS_INFO("I said turn right.");
-		else ROS_INFO("I said turn left.");
-		if (au_uav_ros::shouldTurnRight(thisPlane, *(threat.threatPlane)))
-			ROS_INFO("RIPNA said turn right.");
-		else
-			ROS_INFO("RIPNA said turn left.");
-	}
-
-	 return turnRight;
+     return turnRight;
 }
 
 /*  */
 waypoint ipn::createAvoidanceWaypoint(SimPlaneObject &thisPlane, threatInfo &threat) {
-	waypoint wp;
-	waypoint currentLoc = thisPlane.getCurrentLoc();
-	double currentBearing = thisPlane.getCurrentBearing() * DEGREES_TO_RADIANS;
-	double newBearing;
-	//double maxTurnAngle = thisPlane.getSimSpeed() * MAXIMUM_TURNING_ANGLE;
-	double turnAngle = thisPlane.getSimSpeed() * MAXIMUM_TURNING_ANGLE * exp(-1.0 * threat.ZEM / ZEM_THRESHOLD);
-	if (shouldTurnRight(thisPlane, threat)) {
-		turnAngle = -1.0 * turnAngle;
-	}
-	newBearing = currentBearing + turnAngle * DEGREES_TO_RADIANS;
+    waypoint wp;
+    waypoint currentLoc = thisPlane.getCurrentLoc();
+    double currentBearing = thisPlane.getCurrentBearing() * DEGREES_TO_RADIANS;
+    double newBearing;
+    double turnAngle = thisPlane.getSimSpeed() * MAXIMUM_TURNING_ANGLE * exp(-threat.ZEM / 50);
+    if (shouldTurnRight(thisPlane, threat)) {
+        turnAngle = -1.0 * turnAngle;
+    }
+    newBearing = currentBearing + turnAngle * DEGREES_TO_RADIANS;
 
-	wp.latitude = currentLoc.latitude + thisPlane.getSpeed() * sin(newBearing) / threat.separationV.getLatToMeters();
-	wp.longitude = currentLoc.longitude + thisPlane.getSpeed() * cos(newBearing) / threat.separationV.getLonToMeters();
-	wp.altitude = currentLoc.altitude;
+    wp.latitude = currentLoc.latitude + thisPlane.getSpeed() * sin(newBearing) / threat.displacement.getLatToMeters();
+    wp.longitude = currentLoc.longitude + thisPlane.getSpeed() * cos(newBearing) / threat.displacement.getLonToMeters();
+    wp.altitude = currentLoc.altitude;
 
-	if (IPN_PRINT_DEBUG_3) {
-		// ROS_INFO("LatToMeters: %f, LonToMeters: %f",
-		// 	threat.separationV.getLatToMeters(), threat.separationV.getLatToMeters());
-		ROS_INFO("Turn angle: %f, Simulation speed: %f", turnAngle, thisPlane.getSimSpeed());
-	}
-
-	if (IPN_PRINT_RIPNA_3) {
-		bool ripnaTurnRight = au_uav_ros::shouldTurnRight(thisPlane, *(threat.threatPlane));
-		double ripnaTurnRadius = au_uav_ros::calculateTurningRadius(threat.ZEM);
-		waypoint ripnaWP = au_uav_ros::calculateWaypoint(thisPlane, ripnaTurnRadius, ripnaTurnRight);
-		// double ripnaTurnAngle = thisPlane.getSpeed() / ripnaTurnRadius
-		// 	* thisPlane.getSimSpeed() * RADIANS_TO_DEGREES;
-		// ROS_INFO("My new bearing: %f", newBearing * RADIANS_TO_DEGREES);
-		// ROS_INFO("My turning angle: %f", turnAngle);
-		// ROS_INFO("RIPNA turn angle: %f", ripnaTurnAngle);
-		// ROS_INFO("My waypoint's distance: %f", distanceBetween(getWaypoint(thisPlane.getCurrentLoc()), wp));
-		// ROS_INFO("RIPNA waypoint distance: %f", distanceBetween(getWaypoint(thisPlane.getCurrentLoc()), ripnaWP));
-		ROS_INFO("Distance between our waypoints: %f", distanceBetween(wp, ripnaWP));
-	}
-
-	return wp;
+    return wp;
 }

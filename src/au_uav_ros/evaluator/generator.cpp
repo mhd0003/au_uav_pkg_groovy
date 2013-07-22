@@ -38,7 +38,7 @@ Compiled with g++.
 //amount of space in meters between each plane at start
 #define BUFFER_SPACE 36.0 //meters
 
-///home/phil/fuerte_workspace/sandbox/AU_UAV_stack/AU_UAV_ROS
+///home/phil/fuerte_workspace/sandbox/AU_UAV_stack/au_uav_ros
 //output directory
 #define OUTPUT_DIRECTORY "/home/monzy/catkin_ws/src/au_uav_ros/courses/"
 
@@ -114,7 +114,7 @@ void generateCourse(int numberOfPlanes, int numberOfWayPoints, int fieldLength, 
 	
 	char filename[1000];
 	sprintf(filename, "%s/%s_%d_%dm_%d.course", OUTPUT_DIRECTORY,fileName, numberOfPlanes, fieldLength, courseNumber);
-	//std::string outDir = ros::package::getPath("AU_UAV_ROS")+"/courses/";
+	//std::string outDir = ros::package::getPath("au_uav_ros")+"/courses/";
 	//sprintf(filename, "%s/%s%d_%dm_%d.course", outDir.c_str(),fileName, numberOfPlanes, fieldLength, courseNumber);
 
 	
@@ -137,7 +137,7 @@ void generateCourse(int numberOfPlanes, int numberOfWayPoints, int fieldLength, 
 		struct waypoint newPoint;
 		int altitudeDifference = MAX_ALTITUDE - MIN_ALTITUDE;
 		
-		fprintf(fp, "#Auburn University ATTRACT Project - AU_UAV_ROS Sub-project\n");
+		fprintf(fp, "#Auburn University ATTRACT Project - au_uav_ros Sub-project\n");
 		fprintf(fp, "#Randomly generated course file\n");
 		fprintf(fp, "#Settings:\n");
 		fprintf(fp, "#\tNumber of planes: %d\n", numberOfPlanes);
@@ -354,7 +354,7 @@ int main()
 
 	char autoPathName [1000];
 	sprintf(autoPathName,"%s/%s%s",OUTPUT_DIRECTORY,fileName,AUTO_EXTENSION);
-	//sprintf(autoPathName,"%s/%s%s",(ros::package::getPath("AU_UAV_ROS")+"/courses/"+autoFile+AUTOEXTENSION).c_str());
+	//sprintf(autoPathName,"%s/%s%s",(ros::package::getPath("au_uav_ros")+"/courses/"+autoFile+AUTOEXTENSION).c_str());
 	autoFP = fopen(autoPathName,"w");
 
 

@@ -12,7 +12,7 @@
 
 #include "Position.h"
 #include "map_tools.h"
-#include "AU_UAV_ROS/standardFuncs.h"
+#include "au_uav_ros/standardFuncs.h"
 
 
 #ifndef RADIAN_CONSTANTS
@@ -282,7 +282,7 @@ vector<Position> DiscretizedPlane::generateCombinedWaypoints(vector<int> &realWa
 	return combined;
 }
 
-#define maxTurningAngle 22.5
+#define maxTurningAngle 45.0
 // @param bearingAtStart is assumed to be zero at start of simulation. This parameter can also be used
 // to move the plane through time from any point in the simulation onward though
 void DiscretizedPlane::moveThroughTime(double bearingAtStart, bool isFirstPositionWaypoint) {

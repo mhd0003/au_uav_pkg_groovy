@@ -281,6 +281,7 @@ public:
     MapSearchNode() {
         x = y = 0;
         timestep = 0;
+		parentWentDiagonal = false;
         parent_bearing = initial_bearing;
     }
     
@@ -601,28 +602,28 @@ bool MapSearchNode::GetSuccessors( AStarSearch<MapSearchNode> *astarsearch, MapS
             // left
             if( legal_moves == 4 )
             {
-                NewNode = MapSearchNode( x-1, y, time_z, W, child_expansions, false);
+                NewNode = MapSearchNode( x-1, y, time_z, W, child_expansions, parentWentDiagonal);
                 astarsearch->AddSuccessor( NewNode );
             }
             
             // top
             if( legal_moves == 6 )
             {
-                NewNode = MapSearchNode( x, y-1, time_z, N, child_expansions, false);
+                NewNode = MapSearchNode( x, y-1, time_z, N, child_expansions, parentWentDiagonal);
                 astarsearch->AddSuccessor( NewNode );
             }
             
             // right
             if( legal_moves == 0 )
             {
-                NewNode = MapSearchNode( x+1, y, time_z, E, child_expansions, false);
+                NewNode = MapSearchNode( x+1, y, time_z, E, child_expansions, parentWentDiagonal);
                 astarsearch->AddSuccessor( NewNode );
             }
             
             // down
             if( legal_moves == 2 )
             {
-                NewNode = MapSearchNode( x, y+1, time_z, S, child_expansions, false);
+                NewNode = MapSearchNode( x, y+1, time_z, S, child_expansions, parentWentDiagonal);
                 astarsearch->AddSuccessor( NewNode );
             }
             
@@ -986,9 +987,9 @@ queue<point> astar_point(DangerGrid *bc, double sx, double sy, int endx, int end
 //		timey++;
 //		return at;
 //	}
-	if (planeid == 0 || planeid == 6) {
-		printPath(a_path, planeid, sx, sy, endx, endy,bc);
-	}
+//	if (planeid == 1 || planeid == 7) {
+//		printPathAndDanger(a_path, planeid, sx, sy, endx, endy,bc);
+//	}
 	return a_path;
 //	int index = 0;
 //	while (!a_path.empty()) {

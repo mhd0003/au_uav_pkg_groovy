@@ -45,7 +45,7 @@ PlaneObject::PlaneObject(int _id) {
 }
 
 /* Explicit value constructor using Telemetry */
-PlaneObject::PlaneObject(double cRadius, const Telemetry &msg) { 
+PlaneObject::PlaneObject(double cRadius, const Telemetry &msg) {
     this->id = msg.planeID;
     this->currentLoc.altitude = msg.currentAltitude;
     this->currentLoc.latitude = msg.currentLatitude;
@@ -100,12 +100,12 @@ void PlaneObject::updateTime(void) {
 }
 
 // md
-// 
+//
 bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
     //Update previous and current position
     this->setPreviousLoc(this->currentLoc.latitude, this->currentLoc.longitude, this->currentLoc.altitude);
     this->setCurrentLoc(msg.currentLatitude, msg.currentLongitude, msg.currentAltitude);
-    
+
     // md
     // Changed from cardinal to cartesian.
     // TODO: Get rid of those DELTA_LXX_TO_METERS constants
@@ -114,7 +114,7 @@ bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
     double angle = atan2(numerator*DELTA_LAT_TO_METERS,denominator*DELTA_LON_TO_METERS)*180/PI;
 
     // md
-    if (numerator != 0 || denominator != 0) { 
+    if (numerator != 0 || denominator != 0) {
         this->setCurrentBearing(angle);
     }
 
@@ -138,8 +138,8 @@ bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
         // TODO: What happens if plane pops all mission WPs and then later the CA node makes it avoid a plane?
         //this means we reached the avoidance wp and so the next command should be issued
         avoidWp = INVALID_WP;
-        isCommand = true;
-    } 
+        if (!normalPath.empty()) isCommand = true;
+    }
     //if here then destination is in normalPath
     //next see if we need to dump any points from the normal path (dump wp if within 1s of it)
     else if(!normalPath.empty() && msg.distanceToDestination > -WAYPOINT_THRESHOLD && msg.distanceToDestination < WAYPOINT_THRESHOLD)
@@ -155,10 +155,10 @@ bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
     //     isCommand = true;
     // }
 
-    if (!plannedPath.empty()) {
-        plannedPath.pop_front();
-        isCommand = true;
-    }
+    // if (!plannedPath.empty()) {
+    //     plannedPath.pop_front();
+    //     isCommand = true;
+    // }
 
     //if we have a command to process, process it
     if(isCommand)
@@ -171,15 +171,17 @@ bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
             newCommand.longitude = avoidWp.longitude;
             newCommand.altitude = avoidWp.altitude;
             return true;
-        } else if (!plannedPath.empty()) {
-            newCommand.commandID = COMMAND_AVOID_WP;
-            newCommand.commandHeader.stamp = ros::Time::now();
-            newCommand.planeID = id;
-            newCommand.latitude = plannedPath.front().latitude;
-            newCommand.longitude = plannedPath.front().longitude;
-            newCommand.altitude = plannedPath.front().altitude;
-            return true;
-        } else if (!normalPath.empty()) {
+        }
+        // else if (!plannedPath.empty()) {
+        //     newCommand.commandID = COMMAND_AVOID_WP;
+        //     newCommand.commandHeader.stamp = ros::Time::now();
+        //     newCommand.planeID = id;
+        //     newCommand.latitude = plannedPath.front().latitude;
+        //     newCommand.longitude = plannedPath.front().longitude;
+        //     newCommand.altitude = plannedPath.front().altitude;
+        //     return true;
+        // }
+        else if (!normalPath.empty()) {
             newCommand.commandID = COMMAND_NORMAL_WP;
             newCommand.commandHeader.stamp = ros::Time::now();
             newCommand.planeID = id;
@@ -189,7 +191,6 @@ bool PlaneObject::update(const Telemetry &msg, Command &newCommand) {
             return true;
         }
     }
-        
     else {
         //if we get here, then avoidance queue is empty and no new wps need to be sent for normal path
         return false;
@@ -216,7 +217,7 @@ double PlaneObject::getTargetBearing(void) const {
 double PlaneObject::getCurrentBearing(void) const {
     return this->currentBearing;
 }
-    
+
 double PlaneObject::getSpeed(void) const {
     return this->speed;
 }
@@ -245,7 +246,7 @@ double PlaneObject::findDistance(const PlaneObject& plane) const {
 }
 
 
-/* Find distance between this plane and another pair of coordinates, 
+/* Find distance between this plane and another pair of coordinates,
 returns value in meters */
 double PlaneObject::findDistance(double lat2, double lon2) const {
     double xdiff = (lon2 - this->currentLoc.longitude)*DELTA_LON_TO_METERS;
@@ -260,12 +261,12 @@ double PlaneObject::findAngle(const PlaneObject& plane) const {
     return this->findAngle(plane.currentLoc.latitude, plane.currentLoc.longitude);
 }
 
-/* Find Cartesian angle between this plane and another plane's latitude/longitude 
+/* Find Cartesian angle between this plane and another plane's latitude/longitude
 using this plane as the origin */
 double PlaneObject::findAngle(double lat2, double lon2) const {
     double xdiff = (lon2 - this->currentLoc.longitude)*DELTA_LON_TO_METERS;
     double ydiff = (lat2 - this->currentLoc.latitude)*DELTA_LAT_TO_METERS;
-    
+
     return atan2(ydiff, xdiff);
 }
 
@@ -313,7 +314,7 @@ void PlaneObject::removeNormalWp(struct au_uav_ros::waypoint wp) {
     for (i = normalPath.begin(); i != normalPath.end(); i++) {
         if (wp == *i) {
             break;
-        }   
+        }
     }
     if (i != normalPath.end()) {
         normalPath.erase(i);
@@ -342,17 +343,17 @@ Command PlaneObject::getPriorityCommand(void) {
         ret.latitude = avoidWp.latitude;
         ret.longitude = avoidWp.longitude;
         ret.altitude = avoidWp.altitude;
-        ret.commandID = COMMAND_AVOID_WP; 
+        ret.commandID = COMMAND_AVOID_WP;
     }
-    else if (!plannedPath.empty())
-    {
-        //we have a point from the planning algorithm
-        ret.planeID = this->id;
-        ret.latitude = plannedPath.front().latitude;
-        ret.longitude = plannedPath.front().longitude;
-        ret.altitude = plannedPath.front().altitude;
-        ret.commandID = COMMAND_AVOID_WP; 
-    }
+    // else if (!plannedPath.empty())
+    // {
+    //     //we have a point from the planning algorithm
+    //     ret.planeID = this->id;
+    //     ret.latitude = plannedPath.front().latitude;
+    //     ret.longitude = plannedPath.front().longitude;
+    //     ret.altitude = plannedPath.front().altitude;
+    //     ret.commandID = COMMAND_AVOID_WP;
+    // }
     else if (!normalPath.empty())
     {
         //we have a normal path point at least, fill it out
@@ -377,7 +378,7 @@ std::vector<waypoint> PlaneObject::getNormalPath(void) {
 
 	// md
 	// Something in A* code causes Coordinator node to crash
-	// if it doesn't get any waypoints 
+	// if it doesn't get any waypoints
     if (normalPath.size() == 0) {
         ROS_ERROR("No normal waypoints! Adding current location...");
         normalPath.push_back(currentLoc);

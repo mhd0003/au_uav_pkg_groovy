@@ -47,7 +47,7 @@ namespace au_uav_ros {
 		void displayOutput(void);
 		void endEvaluation(void);
 		bool createCourseUAVs(std::string filename);
-		void telemetry(const au_uav_ros::Telemetry &msg);
+		void telemetry(const Telemetry &msg);
 
 
 	private:
@@ -67,11 +67,15 @@ namespace au_uav_ros {
 		int numAvoids;
 		int TIME_LIMIT;
 
-		std::map<int, au_uav_ros::Telemetry> previousUpdatesMap;
-		std::map<int, au_uav_ros::Telemetry> latestUpdatesMap;
-		std::map<int, std::queue<au_uav_ros::waypoint> > waypointQueues;
-		std::map<int, std::list<au_uav_ros::waypoint> > waypointLists;
-		std::map<int,au_uav_ros::waypoint> lastAvoidWaypoints;
+		std::map<int, Telemetry> previousUpdatesMap;
+		std::map<int, Telemetry> latestUpdatesMap;
+		std::map<int, std::queue<waypoint> > waypointQueues;
+		std::map<int, std::list<waypoint> > waypointLists;
+		std::map<int,waypoint> lastAvoidWaypoints;
+
+		std::map<int,ros::Time> lastCollisionTime;
+		std::map<int,ros::Time> lastConflictTime;
+
 		std::map<int, bool> isDead;
 		std::map<int, ros::Duration> timeOfDeath;
 		std::map<int, double> distanceTraveled;
